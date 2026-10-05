@@ -67,6 +67,11 @@ def fmt_hours(h):
     return f"{h:.0f} h" if h <= 72 else f"{h / 24:.1f} d"
 
 
+def fmt_alarm(h, mode):
+    """Time to alarm, except for sensor faults where the machine itself is healthy."""
+    return "n/a (instrument check)" if mode == "SENSOR_FAULT" else fmt_hours(h)
+
+
 def pretty(mode):
     return str(mode or "NONE").replace("_", " ").title()
 
@@ -407,16 +412,31 @@ class DemoRepo:
         dt = same.DOWNTIME_HOURS.mean() if len(same) else f.DOWNTIME_HOURS.mean()
         hrs = r.HOURS_TO_ALARM
         when = "within 24 h" if hrs < 72 else "within 7 days"
+        wo = _le().load()["work_orders"]
+        prior = wo[(wo.ASSET_ID == asset_id) & (wo.WO_TYPE == "CM") & (wo.FAILURE_MODE == mode)]
+        guide = next((h.DOC_ID for h in hits.itertuples() if h.SOURCE == "MANUAL" and h.FAILURE_MODE == mode), None)
         if mode == "NONE":
             diagnosis = f"No failure signature detected on {asset_id}; condition is within normal limits."
+            confidence = "High - every indicator is within its learned baseline."
+        elif mode == "SENSOR_FAULT":
+            diagnosis = (f"**Sensor fault** on {asset_id}: the vibration transmitter is saturating at 24.9 mm/s while "
+                         "temperature, current and speed are normal. The machine itself is healthy.")
+            confidence = "High - saturated readings with normal process signals match the false-alarm pattern in [DOC-019]."
         else:
             diagnosis = f"**{pretty(mode)}** suspected on {r.ASSET_NAME} ({asset_id}), risk {r.RISK_SCORE:.0f}/100 ({r.RISK_BAND})."
+            basis = [f"matches the {pretty(mode).lower()} signature in [{guide}]" if guide else
+                     f"matches the {pretty(mode).lower()} signature"]
+            if len(prior):
+                p0 = prior.sort_values("CREATED_TS").iloc[-1]
+                basis.append(f"the same failure on this asset on {pd.to_datetime(p0.CREATED_TS):%d %b} [{p0.WO_ID}]")
+            level = "High" if r.RISK_BAND == "HIGH" and (len(prior) or guide) else "Medium"
+            confidence = f"{level} - " + " and ".join(basis) + "."
         answer = (
-            f"**1) Diagnosis** - {diagnosis}\n\n"
+            f"**1) Diagnosis** - {diagnosis}\n\n**Confidence:** {confidence}\n\n"
             f"**2) Evidence** - 24 h vibration {r.VIB_AVG_24H:.2f} mm/s = {r.VIB_RATIO:.2f}x baseline "
             f"{r.BASE_VIB:.2f} (alarm {r.VIBRATION_ALARM_MM_S:.1f}); temperature {r.TEMP_AVG_24H:.1f} °C "
             f"({r.TEMP_DELTA:+.1f} °C vs baseline, alarm {r.TEMP_ALARM_C:.0f}); current ratio {r.CUR_RATIO:.3f}; "
-            f"projected alarm: {fmt_hours(hrs)}; {int(r.DAYS_SINCE_PM)} days since last PM. {cites}\n\n"
+            f"projected alarm: {fmt_alarm(hrs, mode)}; {int(r.DAYS_SINCE_PM)} days since last PM. {cites}\n\n"
             f"**3) Recommended action** - {MODE_ACTIONS.get(mode, 'continue routine monitoring')}; "
             f"schedule {when}.\n\n"
             f"**4) Risk if ignored** - comparable breakdowns in the history cost on average {dt:.1f} h of downtime."
@@ -544,7 +564,7 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 
 /* segmented controls (top navigation, copilot mode, time window): horizontal radios styled like Snowsight */
 .st-key-nav div[role="radiogroup"], .st-key-cop_mode div[role="radiogroup"], .st-key-a360_win div[role="radiogroup"] {
-  flex-direction: row; flex-wrap: nowrap; gap: 2px; width: fit-content; max-width: 100%; overflow-x: auto;
+  flex-direction: row; flex-wrap: wrap; gap: 2px; width: fit-content; max-width: 100%;
   background: #fff; border: 1px solid #dbe3ea; border-radius: 10px; padding: 3px; box-shadow: 0 1px 2px rgba(13,59,92,.06); }
 .st-key-nav label[data-testid="stRadioOption"], .st-key-nav label[data-baseweb="radio"], .st-key-cop_mode label[data-testid="stRadioOption"], .st-key-cop_mode label[data-baseweb="radio"], .st-key-a360_win label[data-testid="stRadioOption"], .st-key-a360_win label[data-baseweb="radio"] { background: transparent; border: 0; border-radius: 8px; padding: 6px 14px; margin: 0; cursor: pointer;
   transition: background .12s; }
@@ -711,6 +731,14 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .st-key-appbar .element-container, .st-key-appbar .stButton { margin: 0 !important; }
 .st-key-appbar [data-testid="stVerticalBlock"] { gap: 0 !important; }
 .st-key-appbar .pp-fresh { text-align: right; margin: 0; }
+.st-key-sev_CRITICAL button p, .st-key-sev_WARNING button p, .st-key-sev_INFO button p { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1500px) {
+  .st-key-appbar .pp-brand-s, .st-key-appbar .pp-fresh br, .st-key-appbar .pp-fresh .pp-scored { display: none; }
+  .st-key-nav label[data-testid="stRadioOption"], .st-key-nav label[data-baseweb="radio"] { padding: 6px 10px; }
+}
+@media (max-width: 1300px) { .st-key-appbar .pp-badge { font-size: .66rem; padding: 4px 8px; } }
+.st-key-f_sim button p { white-space: nowrap; }
+@media (max-width: 1400px) { .st-key-f_sim button p { font-size: .8rem; } .st-key-f_sim button { padding: 0 8px; } }
 .st-key-sev_CRITICAL button, .st-key-sev_WARNING button, .st-key-sev_INFO button {
   background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.28); border-radius: 999px; min-height: 36px;
   height: 36px; padding: 0 12px; transition: background .12s, border-color .12s; }
@@ -845,18 +873,18 @@ def line_color(line_id):
 open_all = alerts[alerts.STATUS.isin(OPEN_ALERT)]
 sev_counts = open_all.SEVERITY.value_counts()
 badge = ('<span class="pp-badge live">● LIVE · SNOWFLAKE</span>' if LIVE
-         else '<span class="pp-badge demo">● DEMO · SYNTHETIC DATA</span>')
+         else '<span class="pp-badge demo">● DEMO DATA</span>')
 with st.container(key="appbar"):
-    b1, b2, b3, b4, b5, b6 = st.columns([5.0, 2.2, 1.05, 1.05, 0.9, 1.7], gap="small",
+    b1, b2, b3, b4, b5, b6 = st.columns([4.4, 2.2, 1.15, 1.15, 0.95, 1.9], gap="small",
                                         vertical_alignment="center") if ST_VER >= (1, 36) \
-        else st.columns([5.0, 2.2, 1.05, 1.05, 0.9, 1.7], gap="small")
+        else st.columns([4.4, 2.2, 1.15, 1.15, 0.95, 1.9], gap="small")
     with b1:
         html("""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">❄︎</div><div>
 <div class="pp-brand-t">PlantPulse</div><div class="pp-brand-s">Predictive maintenance &amp; OEE command center · Pune &amp; Chennai</div>
 </div></div></div>""")
     with b2:
         html(f"""<div class="pp-fresh">Telemetry as of <b>{as_of:%d %b %Y, %H:%M}</b><br>
-scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot"}</div>""")
+<span class="pp-scored">scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot"}</span></div>""")
     for col, sev in zip((b3, b4, b5), ("CRITICAL", "WARNING", "INFO")):
         with col:
             st.button(f"{int(sev_counts.get(sev, 0))}  {SEV_STYLE[sev][1]}  {sev.lower()}", key=f"sev_{sev}",
@@ -867,8 +895,8 @@ scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot
 
 if st.session_state.get("nav") not in PAGES:
     st.session_state["nav"] = PAGES[0]
-n1, n2, n3, n4 = st.columns([6.6, 1.45, 1.45, 1.5], gap="small", vertical_alignment="center") if ST_VER >= (1, 36) \
-    else st.columns([6.6, 1.45, 1.45, 1.5], gap="small")
+n1, n2, n3, n4 = st.columns([6.4, 1.4, 1.4, 1.6], gap="small", vertical_alignment="center") if ST_VER >= (1, 36) \
+    else st.columns([6.4, 1.4, 1.4, 1.6], gap="small")
 with n1:
     page = st.radio("Navigation", PAGES, key="nav", horizontal=True, label_visibility="collapsed")
 with n2:
@@ -1046,7 +1074,7 @@ def evidence_block(asset_id):
         html('<div style="height:8px"></div>'
              + threshold_bar("Vibration · 24 h avg", "mm/s", r.VIB_AVG_24H, bv, r.VIBRATION_ALARM_MM_S)
              + threshold_bar("Temperature · 24 h avg", "°C", r.TEMP_AVG_24H, bt, r.TEMP_ALARM_C, lo=20, digits=1))
-    html(stats([("Hours to alarm", fmt_hours(r.HOURS_TO_ALARM)),
+    html(stats([("Hours to alarm", fmt_alarm(r.HOURS_TO_ALARM, r.SUSPECTED_MODE)),
                 ("ML P(fail ≤ 72 h)", fnum(r.ML_PROB, "{:.0%}", "n/a (demo)" if not LIVE else "–")),
                 ("Suspected mode", pretty(r.SUSPECTED_MODE)),
                 ("Vibration × baseline", f"{fnum(r.VIB_RATIO, '{:.2f}')}×  ·  {fnum(r.TEMP_DELTA, '{:+.1f}')} °C")]))
@@ -1222,7 +1250,7 @@ alarm limit in {fmt_hours(t.HOURS_TO_ALARM)}</div><div class="pp-nba-s">Recommen
                 with x1:
                     html(f"{sev_chip(a.SEVERITY)} &nbsp;<b>{a.ALERT_ID}</b> · {a.ASSET_ID}<br>"
                          f'<span style="font-size:.84rem;color:#52514e">{pretty(a.SUSPECTED_MODE)} · risk <b>{a.RISK_SCORE:.0f}</b>'
-                         f" · alarm {fmt_hours(a.HOURS_TO_ALARM)}</span>")
+                         f" · alarm {fmt_alarm(a.HOURS_TO_ALARM, a.SUSPECTED_MODE)}</span>")
                 with x2:
                     st.button("Open", key=f"cr_{a.ALERT_ID}", on_click=goto, args=(PAGES[1], a.ASSET_ID, a.ALERT_ID),
                               **stretch("button"))
@@ -1267,7 +1295,7 @@ def page_alerts():
             status = {"NEW": "new", "ACKNOWLEDGED": "acknowledged", "DISMISSED": "dismissed",
                       "WO_CREATED": f"{a.WO_ID} raised"}.get(a.STATUS, a.STATUS)
             return (f":{sev}[**{SEV_STYLE.get(a.SEVERITY, ('', 'ℹ'))[1]} {a.SEVERITY}**] · **{i}** · {a.ASSET_ID}  \n"
-                    f"{pretty(a.SUSPECTED_MODE)} · risk **{a.RISK_SCORE:.0f}** · alarm {fmt_hours(a.HOURS_TO_ALARM)}"
+                    f"{pretty(a.SUSPECTED_MODE)} · risk **{a.RISK_SCORE:.0f}** · alarm {fmt_alarm(a.HOURS_TO_ALARM, a.SUSPECTED_MODE)}"
                     f" · _{status}_")
 
         alert_id = st.radio("Alert queue", q.ALERT_ID.tolist(), key="alert_pick", format_func=_label,
@@ -1424,7 +1452,7 @@ def page_copilot():
             ra = rk_all.loc[asset]
             html(f"""<div class="pp-card"><div class="pp-asset-k">Current condition</div>
 <div style="margin:6px 0">{band_chip(ra.RISK_BAND, ra.SUSPECTED_MODE)} <b>{pretty(ra.SUSPECTED_MODE)}</b></div>
-<div class="pp-asset-s">risk {ra.RISK_SCORE:.0f}/100 · alarm in {fmt_hours(ra.HOURS_TO_ALARM)} · vibration
+<div class="pp-asset-s">risk {ra.RISK_SCORE:.0f}/100 · alarm {fmt_alarm(ra.HOURS_TO_ALARM, ra.SUSPECTED_MODE)} · vibration
 {fnum(ra.VIB_RATIO, '{:.2f}')}× baseline · {fnum(ra.TEMP_DELTA, '{:+.1f}')} °C</div></div>""")
             suggestions = [
                 f"What is the most likely root cause of the {pretty(ra.SUSPECTED_MODE).lower()} signature and how confident are we?",
