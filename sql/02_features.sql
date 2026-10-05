@@ -1,0 +1,127 @@
+-- =====================================================================
+-- PlantPulse | 02 - IT/OT convergence: condition-monitoring features
+--   OT telemetry (10-min) -> hourly -> rolling 24h/72h features
+--   joined (ASOF) with ERP maintenance history and asset master limits
+-- =====================================================================
+USE WAREHOUSE PLANTPULSE_WH;
+USE DATABASE PLANTPULSE;
+USE SCHEMA ANALYTICS;
+
+-- 1) Hourly roll-up. Saturated transmitter values (>= 24.5 mm/s) are treated as
+--    data-quality events, not vibration, so a loose connector cannot raise a false alarm.
+CREATE OR REPLACE VIEW ANALYTICS.V_SENSOR_HOURLY COMMENT = 'Hourly condition indicators per asset' AS
+SELECT
+  ASSET_ID,
+  DATE_TRUNC('HOUR', READING_TS)                                              AS HOUR_TS,
+  AVG(IFF(RPM > 0 AND VIBRATION_MM_S < 24.5, VIBRATION_MM_S, NULL))           AS VIB_AVG,
+  MAX(IFF(RPM > 0 AND VIBRATION_MM_S < 24.5, VIBRATION_MM_S, NULL))           AS VIB_MAX,
+  STDDEV(IFF(RPM > 0 AND VIBRATION_MM_S < 24.5, VIBRATION_MM_S, NULL))        AS VIB_STD,
+  AVG(IFF(RPM > 0, TEMPERATURE_C, NULL))                                      AS TEMP_AVG,
+  MAX(IFF(RPM > 0, TEMPERATURE_C, NULL))                                      AS TEMP_MAX,
+  AVG(IFF(RPM > 0, RPM, NULL))                                                AS RPM_AVG,
+  AVG(IFF(RPM > 0, CURRENT_A, NULL))                                          AS CUR_AVG,
+  STDDEV(IFF(RPM > 0, CURRENT_A, NULL))                                       AS CUR_STD,
+  AVG(IFF(RPM > 0, 1, 0))                                                     AS RUNNING_FRAC,
+  COUNT_IF(VIBRATION_MM_S >= 24.5)                                            AS SATURATED_READINGS
+FROM OT.SENSOR_READINGS
+GROUP BY 1, 2;
+
+-- 2) Healthy baseline per asset (median is robust to the short degradation windows)
+CREATE OR REPLACE VIEW ANALYTICS.V_ASSET_BASELINE COMMENT = 'Learned healthy operating baseline per asset' AS
+SELECT ASSET_ID,
+       MEDIAN(VIB_AVG)  AS BASE_VIB,
+       MEDIAN(TEMP_AVG) AS BASE_TEMP,
+       MEDIAN(CUR_AVG)  AS BASE_CUR,
+       MEDIAN(CUR_STD)  AS BASE_CUR_STD
+FROM ANALYTICS.V_SENSOR_HOURLY
+WHERE RUNNING_FRAC > 0.9
+GROUP BY 1;
+
+-- 3) Rolling features + trend slopes + ERP context
+CREATE OR REPLACE VIEW ANALYTICS.V_ASSET_FEATURES COMMENT = 'Hourly ML feature vector per asset (IT + OT)' AS
+WITH h AS (
+  SELECT h.*, DATEDIFF('hour', '2026-01-01'::TIMESTAMP_NTZ, HOUR_TS)::FLOAT AS X
+  FROM ANALYTICS.V_SENSOR_HOURLY h
+  WHERE RUNNING_FRAC > 0.5 AND VIB_AVG IS NOT NULL
+),
+w AS (
+  SELECT h.*,
+    AVG(VIB_AVG)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS VIB_AVG_24H,
+    MAX(VIB_MAX)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS VIB_MAX_24H,
+    AVG(VIB_STD)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS VIB_STD_24H,
+    AVG(TEMP_AVG)  OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS TEMP_AVG_24H,
+    MAX(TEMP_MAX)  OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS TEMP_MAX_24H,
+    AVG(CUR_AVG)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS CUR_AVG_24H,
+    AVG(CUR_STD)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS CUR_STD_24H,
+    AVG(RPM_AVG)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS RPM_AVG_24H,
+    STDDEV(RPM_AVG) OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS RPM_STD_24H,
+    -- 72h least-squares slope components
+    COUNT(*)            OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS N72,
+    SUM(X)              OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS SX,
+    SUM(X * X)          OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS SXX,
+    SUM(VIB_AVG)        OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS SV,
+    SUM(X * VIB_AVG)    OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS SXV,
+    SUM(TEMP_AVG)       OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS ST,
+    SUM(X * TEMP_AVG)   OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 71 PRECEDING AND CURRENT ROW) AS SXT,
+    SUM(SATURATED_READINGS) OVER (PARTITION BY ASSET_ID ORDER BY HOUR_TS ROWS BETWEEN 23 PRECEDING AND CURRENT ROW) AS SATURATED_24H
+  FROM h
+),
+pm AS (
+  SELECT ASSET_ID, CLOSED_TS FROM ERP.WORK_ORDERS WHERE WO_TYPE = 'PM' AND STATUS = 'CLOSED' AND CLOSED_TS IS NOT NULL
+)
+SELECT
+  w.ASSET_ID, w.HOUR_TS, a.ASSET_TYPE, a.CRITICALITY, a.LINE_ID,
+  w.VIB_AVG_24H, w.VIB_MAX_24H, w.VIB_STD_24H, w.TEMP_AVG_24H, w.TEMP_MAX_24H, w.CUR_AVG_24H, w.RPM_AVG_24H,
+  b.BASE_VIB, b.BASE_TEMP, b.BASE_CUR,
+  a.VIBRATION_ALARM_MM_S, a.TEMP_ALARM_C,
+  w.VIB_AVG_24H / NULLIF(b.BASE_VIB, 0)                                  AS VIB_RATIO,
+  w.VIB_AVG_24H / NULLIF(a.VIBRATION_ALARM_MM_S, 0)                      AS VIB_ALARM_RATIO,
+  w.VIB_STD_24H / NULLIF(w.VIB_AVG_24H, 0)                               AS VIB_CV,
+  w.TEMP_AVG_24H - b.BASE_TEMP                                           AS TEMP_DELTA,
+  a.TEMP_ALARM_C - w.TEMP_AVG_24H                                        AS TEMP_MARGIN,
+  w.CUR_AVG_24H / NULLIF(b.BASE_CUR, 0)                                  AS CUR_RATIO,
+  w.CUR_STD_24H / NULLIF(b.BASE_CUR_STD, 0)                              AS CUR_VOLATILITY,
+  w.RPM_STD_24H / NULLIF(w.RPM_AVG_24H, 0)                               AS RPM_CV,
+  24 * (w.N72 * w.SXV - w.SX * w.SV) / NULLIF(w.N72 * w.SXX - w.SX * w.SX, 0) AS VIB_SLOPE_PER_DAY,
+  24 * (w.N72 * w.SXT - w.SX * w.ST) / NULLIF(w.N72 * w.SXX - w.SX * w.SX, 0) AS TEMP_SLOPE_PER_DAY,
+  w.SATURATED_24H,
+  COALESCE(DATEDIFF('day', pm.CLOSED_TS, w.HOUR_TS), a.PM_INTERVAL_DAYS)  AS DAYS_SINCE_PM,
+  COALESCE(DATEDIFF('day', pm.CLOSED_TS, w.HOUR_TS), a.PM_INTERVAL_DAYS) - a.PM_INTERVAL_DAYS AS PM_OVERDUE_DAYS
+FROM w
+  ASOF JOIN pm MATCH_CONDITION (w.HOUR_TS >= pm.CLOSED_TS) ON w.ASSET_ID = pm.ASSET_ID
+  JOIN ERP.ASSETS a              ON a.ASSET_ID = w.ASSET_ID
+  JOIN ANALYTICS.V_ASSET_BASELINE b ON b.ASSET_ID = w.ASSET_ID;
+
+-- Materialised copy used by ML training and scoring (refreshed by SCORE_ASSETS)
+CREATE OR REPLACE TABLE ANALYTICS.ASSET_FEATURES AS SELECT * FROM ANALYTICS.V_ASSET_FEATURES;
+
+-- 4) Explainable rule-based health score (0-100), suspected failure mode, time-to-alarm.
+--    Encodes the plant's reliability playbook (KNOWLEDGE DOC-001/002) and works even without ML.
+CREATE OR REPLACE VIEW ANALYTICS.V_RULE_HEALTH COMMENT = 'Explainable condition score + failure-mode signature' AS
+WITH s AS (
+  SELECT f.*,
+    LEAST(1, GREATEST(0, (VIB_RATIO - 1.3) / 1.7))                         AS S_VIB,
+    LEAST(1, GREATEST(0, (TEMP_DELTA - 4) / 10))                           AS S_TEMP,
+    LEAST(1, GREATEST(0, (VIB_SLOPE_PER_DAY / NULLIF(BASE_VIB, 0)) / 0.25)) AS S_VIB_TREND,
+    LEAST(1, GREATEST(0, TEMP_SLOPE_PER_DAY / 3))                          AS S_TEMP_TREND,
+    LEAST(1, GREATEST(0, (ABS(CUR_RATIO - 1) - 0.03) / 0.12))              AS S_CUR
+  FROM ANALYTICS.ASSET_FEATURES f
+)
+SELECT s.*,
+  ROUND(100 * (0.35 * S_VIB + 0.25 * S_TEMP + 0.15 * S_VIB_TREND + 0.10 * S_TEMP_TREND + 0.15 * S_CUR), 1) AS RULE_SCORE,
+  CASE
+    WHEN SATURATED_24H > 0 AND S_VIB < 0.2 AND S_TEMP < 0.2                         THEN 'SENSOR_FAULT'
+    WHEN CUR_RATIO > 1.12 AND TEMP_DELTA > 5                                        THEN 'ELECTRICAL_WINDING'
+    WHEN ASSET_TYPE = 'Coolant Pump' AND VIB_RATIO > 1.25 AND (CUR_RATIO < 0.97 OR CUR_VOLATILITY > 1.5) THEN 'CAVITATION'
+    WHEN TEMP_DELTA > 7 AND VIB_RATIO < 1.7                                         THEN 'LUBRICATION_FAILURE'
+    WHEN VIB_RATIO > 1.4 AND RPM_CV > 0.0025                                        THEN 'MISALIGNMENT'
+    WHEN VIB_RATIO > 1.5 AND TEMP_DELTA > 4                                         THEN 'BEARING_WEAR'
+    WHEN VIB_RATIO > 1.4                                                            THEN 'IMBALANCE'
+    ELSE 'NONE'
+  END AS SUSPECTED_MODE,
+  -- linear extrapolation of the 72h trend to the alarm limit
+  LEAST(
+    IFF(VIB_SLOPE_PER_DAY  > 0.02, GREATEST(0, (VIBRATION_ALARM_MM_S - VIB_AVG_24H) / VIB_SLOPE_PER_DAY * 24), 9999),
+    IFF(TEMP_SLOPE_PER_DAY > 0.3,  GREATEST(0, (TEMP_ALARM_C - TEMP_AVG_24H) / TEMP_SLOPE_PER_DAY * 24), 9999)
+  ) AS HOURS_TO_ALARM
+FROM s;

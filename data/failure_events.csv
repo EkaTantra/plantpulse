@@ -1,0 +1,13 @@
+FAILURE_ID,ASSET_ID,FAILURE_TS,FAILURE_MODE,FAILURE_DESCRIPTION,DOWNTIME_HOURS,DETECTED_BY
+FL-0001,PUN-L1-MTR-01,2026-08-19 14:20:00,BEARING_WEAR,Rolling-element bearing wear / outer race spalling,9.5,Operator / breakdown
+FL-0002,PUN-L1-PMP-01,2026-08-24 03:40:00,CAVITATION,Pump cavitation due to low suction head,5.0,Operator / breakdown
+FL-0003,PUN-L2-GBX-01,2026-08-28 22:10:00,LUBRICATION_FAILURE,Lubrication breakdown leading to overheating,14.0,Operator / breakdown
+FL-0004,CHN-L1-SPN-01,2026-08-31 09:00:00,IMBALANCE,Rotor imbalance,6.5,Operator / breakdown
+FL-0005,CHN-L2-MTR-01,2026-09-03 17:30:00,ELECTRICAL_WINDING,Stator winding insulation degradation,18.0,Operator / breakdown
+FL-0006,PUN-L2-CNV-01,2026-09-07 11:50:00,MISALIGNMENT,Shaft / coupling misalignment,4.0,Operator / breakdown
+FL-0007,CHN-L1-CMP-01,2026-09-11 06:30:00,LUBRICATION_FAILURE,Lubrication breakdown leading to overheating,11.0,Operator / breakdown
+FL-0008,PUN-L1-GBX-01,2026-09-14 15:00:00,BEARING_WEAR,Rolling-element bearing wear / outer race spalling,16.0,Operator / breakdown
+FL-0009,CHN-L2-PMP-01,2026-09-17 02:20:00,CAVITATION,Pump cavitation due to low suction head,4.5,Operator / breakdown
+FL-0010,PUN-L2-SPN-01,2026-09-21 19:40:00,BEARING_WEAR,Rolling-element bearing wear / outer race spalling,12.0,Operator / breakdown
+FL-0011,CHN-L1-GBX-01,2026-09-25 08:10:00,MISALIGNMENT,Shaft / coupling misalignment,7.0,Operator / breakdown
+FL-0012,PUN-L1-CMP-01,2026-09-28 13:30:00,IMBALANCE,Rotor imbalance,5.5,Operator / breakdown

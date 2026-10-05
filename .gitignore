@@ -1,0 +1,22 @@
+# python
+.venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# secrets
+*.pem
+*.p8
+*.key
+.env
+connections.toml
+config.toml
+.streamlit/secrets.toml
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+_site/
+!.streamlit/config.toml
+!app/.streamlit/config.toml

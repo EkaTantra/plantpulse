@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#11567F"/></marker><marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A5CC8"/></marker></defs>
+<rect width="1920" height="1080" fill="#F7FAFC"/>
+<text x="30" y="62" font-size="38" fill="#11567F" font-weight="700">PlantPulse — Predictive Maintenance &amp; OEE Command Center on Snowflake</text>
+<text x="30" y="100" font-size="20" fill="#5B6B7C" >IT + OT + unstructured knowledge converge in one governed platform; CoCo CLI skills and a Streamlit app turn predictions into actions</text>
+<rect x="30" y="130" width="300" height="730" rx="16" fill="#FFFFFF" stroke="#D5E3EC" stroke-width="2"/>
+<rect x="30" y="130" width="300" height="46" rx="16" fill="#11567F"/><rect x="30" y="156" width="300" height="20" fill="#11567F"/>
+<text x="48" y="162" font-size="22" fill="#FFFFFF" font-weight="700">1 · Sources</text>
+<rect x="44" y="195" width="272" height="130" rx="10" fill="#E7F6FC" stroke="#29B5E8" stroke-width="2"/>
+<text x="58" y="223" font-size="19" fill="#1B2A3A" font-weight="700">OT telemetry</text>
+<text x="58" y="247" font-size="15" fill="#5B6B7C" >PLC / historian, 10-min</text>
+<text x="58" y="269" font-size="15" fill="#5B6B7C" >vibration · temperature</text>
+<text x="58" y="291" font-size="15" fill="#5B6B7C" >RPM · motor current</text>
+<rect x="44" y="378" width="272" height="110" rx="10" fill="#EAF0FB" stroke="#3D6FD1" stroke-width="2"/>
+<text x="58" y="406" font-size="19" fill="#1B2A3A" font-weight="700">ERP / CMMS</text>
+<text x="58" y="430" font-size="15" fill="#5B6B7C" >asset master · work orders</text>
+<text x="58" y="452" font-size="15" fill="#5B6B7C" >spare parts · failures</text>
+<rect x="44" y="542" width="272" height="110" rx="10" fill="#EAF0FB" stroke="#3D6FD1" stroke-width="2"/>
+<text x="58" y="570" font-size="19" fill="#1B2A3A" font-weight="700">MES production</text>
+<text x="58" y="594" font-size="15" fill="#5B6B7C" >shift counts · stops</text>
+<text x="58" y="616" font-size="15" fill="#5B6B7C" >ideal cycle times</text>
+<rect x="44" y="705" width="272" height="130" rx="10" fill="#F3ECFB" stroke="#8A5CC8" stroke-width="2"/>
+<text x="58" y="733" font-size="19" fill="#1B2A3A" font-weight="700">Maintenance knowledge</text>
+<text x="58" y="757" font-size="15" fill="#5B6B7C" >OEM manuals · SOPs</text>
+<text x="58" y="779" font-size="15" fill="#5B6B7C" >reliability reviews</text>
+<text x="58" y="801" font-size="15" fill="#5B6B7C" >technician free-text notes</text>
+<rect x="365" y="130" width="300" height="730" rx="16" fill="#FFFFFF" stroke="#D5E3EC" stroke-width="2"/>
+<rect x="365" y="130" width="300" height="46" rx="16" fill="#11567F"/><rect x="365" y="156" width="300" height="20" fill="#11567F"/>
+<text x="383" y="162" font-size="22" fill="#FFFFFF" font-weight="700">2 · Snowflake ingest</text>
+<rect x="379" y="195" width="272" height="90" rx="10" fill="#FFFFFF" stroke="#9CC9DD" stroke-width="2"/>
+<text x="393" y="223" font-size="19" fill="#1B2A3A" font-weight="700">Stage + COPY INTO</text>
+<text x="393" y="247" font-size="15" fill="#5B6B7C" >ERP.LANDING (CSV batch)</text>
+<rect x="379" y="355" width="272" height="110" rx="10" fill="#FFFFFF" stroke="#9CC9DD" stroke-width="2"/>
+<text x="393" y="383" font-size="19" fill="#1B2A3A" font-weight="700">OT stream</text>
+<text x="393" y="407" font-size="15" fill="#5B6B7C" >prod: Snowpipe Streaming / Kafka</text>
+<text x="393" y="429" font-size="15" fill="#5B6B7C" >demo: SIMULATE_SENSOR_STREAM</text>
+<rect x="379" y="535" width="272" height="110" rx="10" fill="#FFFFFF" stroke="#9CC9DD" stroke-width="2"/>
+<text x="393" y="563" font-size="19" fill="#1B2A3A" font-weight="700">Governed tables</text>
+<text x="393" y="587" font-size="15" fill="#5B6B7C" >OT.SENSOR_READINGS (207k rows)</text>
+<text x="393" y="609" font-size="15" fill="#5B6B7C" >ERP.* · KNOWLEDGE.*</text>
+<rect x="379" y="715" width="272" height="120" rx="10" fill="#FFFFFF" stroke="#9CC9DD" stroke-width="2"/>
+<text x="393" y="743" font-size="19" fill="#1B2A3A" font-weight="700">Tasks (every 15 min)</text>
+<text x="393" y="767" font-size="15" fill="#5B6B7C" >T_STREAM_SENSORS</text>
+<text x="393" y="789" font-size="15" fill="#5B6B7C" >→ T_SCORE_ASSETS</text>
+<text x="393" y="811" font-size="15" fill="#5B6B7C" >→ T_GENERATE_ALERTS</text>
+<rect x="700" y="130" width="420" height="730" rx="16" fill="#FFFFFF" stroke="#D5E3EC" stroke-width="2"/>
+<rect x="700" y="130" width="420" height="46" rx="16" fill="#11567F"/><rect x="700" y="156" width="420" height="20" fill="#11567F"/>
+<text x="718" y="162" font-size="22" fill="#FFFFFF" font-weight="700">3 · Intelligence</text>
+<rect x="714" y="195" width="392" height="100" rx="10" fill="#FFFFFF" stroke="#9CC9DD" stroke-width="2"/>
+<text x="728" y="223" font-size="19" fill="#1B2A3A" font-weight="700">IT/OT features</text>
+<text x="728" y="247" font-size="15" fill="#5B6B7C" >hourly → rolling 24 h / 72 h, trend slopes</text>
+<text x="728" y="269" font-size="15" fill="#5B6B7C" >ASOF JOIN to last PM · V_ASSET_FEATURES</text>
+<rect x="714" y="335" width="392" height="100" rx="10" fill="#E9F8F1" stroke="#2E9E6B" stroke-width="2"/>
+<text x="728" y="363" font-size="19" fill="#1B2A3A" font-weight="700">Explainable rules + Snowflake ML</text>
+<text x="728" y="387" font-size="15" fill="#5B6B7C" >V_RULE_HEALTH: score · failure mode · hours to alarm</text>
+<text x="728" y="409" font-size="15" fill="#5B6B7C" >ML CLASSIFICATION (fail ≤ 72 h) → SCORE_ASSETS</text>
+<rect x="714" y="475" width="392" height="80" rx="10" fill="#FFF4E5" stroke="#E08A1E" stroke-width="2"/>
+<text x="728" y="503" font-size="19" fill="#1B2A3A" font-weight="700">Cortex Search</text>
+<text x="728" y="527" font-size="15" fill="#5B6B7C" >MAINTENANCE_KB_SEARCH: manuals + tech notes</text>
+<rect x="714" y="595" width="392" height="100" rx="10" fill="#FFF4E5" stroke="#E08A1E" stroke-width="2"/>
+<text x="728" y="623" font-size="19" fill="#1B2A3A" font-weight="700">Cortex AI COMPLETE (LLM)</text>
+<text x="728" y="647" font-size="15" fill="#5B6B7C" >ROOT_CAUSE_BRIEF: cited RAG answer</text>
+<text x="728" y="669" font-size="15" fill="#5B6B7C" >AI job plans for work orders</text>
+<rect x="714" y="735" width="392" height="100" rx="10" fill="#FFFFFF" stroke="#9CC9DD" stroke-width="2"/>
+<text x="728" y="763" font-size="19" fill="#1B2A3A" font-weight="700">Semantic view + Cortex Analyst</text>
+<text x="728" y="787" font-size="15" fill="#5B6B7C" >PLANT_OPS_SV: OEE · MTTR · PM compliance · risk</text>
+<text x="728" y="809" font-size="15" fill="#5B6B7C" >ASK_OEE: plain English → governed query</text>
+<rect x="1155" y="130" width="340" height="730" rx="16" fill="#FFFFFF" stroke="#D5E3EC" stroke-width="2"/>
+<rect x="1155" y="130" width="340" height="46" rx="16" fill="#11567F"/><rect x="1155" y="156" width="340" height="20" fill="#11567F"/>
+<text x="1173" y="162" font-size="22" fill="#FFFFFF" font-weight="700">4 · Actions</text>
+<rect x="1169" y="195" width="312" height="110" rx="10" fill="#FDECEC" stroke="#D0453F" stroke-width="2"/>
+<text x="1183" y="223" font-size="19" fill="#1B2A3A" font-weight="700">GENERATE_ALERTS</text>
+<text x="1183" y="247" font-size="15" fill="#5B6B7C" >PDM_ALERTS · risk × criticality</text>
+<text x="1183" y="269" font-size="15" fill="#5B6B7C" >CRITICAL / WARNING / INFO</text>
+<rect x="1169" y="372" width="312" height="90" rx="10" fill="#FDECEC" stroke="#D0453F" stroke-width="2"/>
+<text x="1183" y="400" font-size="19" fill="#1B2A3A" font-weight="700">TRIAGE_ALERT</text>
+<text x="1183" y="424" font-size="15" fill="#5B6B7C" >acknowledge · dismiss false alarm</text>
+<rect x="1169" y="528" width="312" height="130" rx="10" fill="#FDECEC" stroke="#D0453F" stroke-width="2"/>
+<text x="1183" y="556" font-size="19" fill="#1B2A3A" font-weight="700">CREATE_PDM_WORK_ORDER</text>
+<text x="1183" y="580" font-size="15" fill="#5B6B7C" >priority policy (DOC-016)</text>
+<text x="1183" y="602" font-size="15" fill="#5B6B7C" >parts + stock check · AI job plan</text>
+<text x="1183" y="624" font-size="15" fill="#5B6B7C" >→ ERP.WORK_ORDERS</text>
+<rect x="1169" y="725" width="312" height="110" rx="10" fill="#FDECEC" stroke="#D0453F" stroke-width="2"/>
+<text x="1183" y="753" font-size="19" fill="#1B2A3A" font-weight="700">Purchase requisitions</text>
+<text x="1183" y="777" font-size="15" fill="#5B6B7C" >stock-out → PR, EXPEDITE if</text>
+<text x="1183" y="799" font-size="15" fill="#5B6B7C" >lead time &gt; time to failure</text>
+<rect x="1530" y="130" width="360" height="730" rx="16" fill="#FFFFFF" stroke="#D5E3EC" stroke-width="2"/>
+<rect x="1530" y="130" width="360" height="46" rx="16" fill="#11567F"/><rect x="1530" y="156" width="360" height="20" fill="#11567F"/>
+<text x="1548" y="162" font-size="22" fill="#FFFFFF" font-weight="700">5 · Experiences</text>
+<rect x="1544" y="195" width="332" height="210" rx="10" fill="#EAF6FB" stroke="#11567F" stroke-width="2"/>
+<text x="1558" y="223" font-size="19" fill="#1B2A3A" font-weight="700">CoCo CLI · 5 project skills</text>
+<text x="1558" y="247" font-size="15" fill="#5B6B7C" >/plantpulse-setup</text>
+<text x="1558" y="269" font-size="15" fill="#5B6B7C" >/asset-health-triage</text>
+<text x="1558" y="291" font-size="15" fill="#5B6B7C" >/root-cause-investigator</text>
+<text x="1558" y="313" font-size="15" fill="#5B6B7C" >/work-order-automator</text>
+<text x="1558" y="335" font-size="15" fill="#5B6B7C" >/oee-analyst</text>
+<text x="1558" y="357" font-size="15" fill="#5B6B7C" >+ reliability-engineer subagent</text>
+<rect x="1544" y="510" width="332" height="130" rx="10" fill="#EAF6FB" stroke="#11567F" stroke-width="2"/>
+<text x="1558" y="538" font-size="19" fill="#1B2A3A" font-weight="700">Streamlit in Snowflake</text>
+<text x="1558" y="562" font-size="15" fill="#5B6B7C" >PlantPulse Command Center:</text>
+<text x="1558" y="584" font-size="15" fill="#5B6B7C" >triage · copilot · asset health</text>
+<text x="1558" y="606" font-size="15" fill="#5B6B7C" >OEE · work orders</text>
+<rect x="1544" y="745" width="332" height="90" rx="10" fill="#EAF6FB" stroke="#11567F" stroke-width="2"/>
+<text x="1558" y="773" font-size="19" fill="#1B2A3A" font-weight="700">Snowflake Intelligence agent</text>
+<text x="1558" y="797" font-size="15" fill="#5B6B7C" >tools: Cortex Analyst · Cortex Search</text>
+<text x="1558" y="819" font-size="15" fill="#5B6B7C" >· root-cause brief</text>
+<path d="M332,330 L363,330" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M332,540 L363,540" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M332,710 L363,710" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M667,330 L698,330" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M667,540 L698,540" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M667,710 L698,710" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M1122,330 L1153,330" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M1122,540 L1153,540" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M1122,710 L1153,710" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M1497,330 L1528,330" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M1497,540 L1528,540" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M1497,710 L1528,710" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<path d="M180.0,835.0000000000001 L180.0,876 L683,876 L683,497.0 L712,497.0" stroke="#8A5CC8" stroke-width="3" fill="none" stroke-dasharray="9 6" marker-end="url(#p)"/>
+<text x="200" y="870" font-size="15" fill="#8A5CC8" font-weight="600">unstructured text → Cortex Search (vector + keyword index)</text>
+<rect x="30" y="895" width="1860" height="160" rx="16" fill="#FFFFFF" stroke="#D5E3EC" stroke-width="2"/>
+<text x="50" y="931" font-size="21" fill="#11567F" font-weight="700">Modular CoCo skills: each does one job and hands an ID to the next</text>
+<text x="1870" y="931" font-size="16" fill="#11567F" font-family="Consolas, monospace" font-weight="600" text-anchor="end">/plantpulse-setup builds and verifies sql/00–09</text>
+<rect x="50" y="949" width="430" height="88" rx="10" fill="#EAF6FB" stroke="#29B5E8" stroke-width="2"/>
+<text x="66" y="977" font-size="18" fill="#11567F" font-family="Consolas, monospace" font-weight="600">/asset-health-triage</text>
+<text x="464" y="977" font-size="15" fill="#D0453F" font-weight="700" text-anchor="end">→ alert id</text>
+<text x="66" y="1001" font-size="14" fill="#5B6B7C" >SCORE_ASSETS · GENERATE_ALERTS</text>
+<text x="66" y="1021" font-size="14" fill="#5B6B7C" >TRIAGE_ALERT</text>
+<path d="M482,993 L508,993" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<rect x="510" y="949" width="430" height="88" rx="10" fill="#EAF6FB" stroke="#29B5E8" stroke-width="2"/>
+<text x="526" y="977" font-size="18" fill="#11567F" font-family="Consolas, monospace" font-weight="600">/root-cause-investigator</text>
+<text x="924" y="977" font-size="15" fill="#D0453F" font-weight="700" text-anchor="end">→ diagnosis</text>
+<text x="526" y="1001" font-size="14" fill="#5B6B7C" >V_SENSOR_HOURLY · WORK_ORDERS</text>
+<text x="526" y="1021" font-size="14" fill="#5B6B7C" >Cortex Search · ROOT_CAUSE_BRIEF</text>
+<path d="M942,993 L968,993" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<rect x="970" y="949" width="430" height="88" rx="10" fill="#EAF6FB" stroke="#29B5E8" stroke-width="2"/>
+<text x="986" y="977" font-size="18" fill="#11567F" font-family="Consolas, monospace" font-weight="600">/work-order-automator</text>
+<text x="1384" y="977" font-size="15" fill="#D0453F" font-weight="700" text-anchor="end">→ WO id</text>
+<text x="986" y="1001" font-size="14" fill="#5B6B7C" >CREATE_PDM_WORK_ORDER · SPARE_PARTS</text>
+<text x="986" y="1021" font-size="14" fill="#5B6B7C" >PURCHASE_REQUISITIONS</text>
+<path d="M1402,993 L1428,993" stroke="#11567F" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<rect x="1430" y="949" width="430" height="88" rx="10" fill="#EAF6FB" stroke="#29B5E8" stroke-width="2"/>
+<text x="1446" y="977" font-size="18" fill="#11567F" font-family="Consolas, monospace" font-weight="600">/oee-analyst</text>
+<text x="1844" y="977" font-size="15" fill="#D0453F" font-weight="700" text-anchor="end">→ OEE gain</text>
+<text x="1446" y="1001" font-size="14" fill="#5B6B7C" >PLANT_OPS_SV · OEE_LOSS_TREE</text>
+<text x="1446" y="1021" font-size="14" fill="#5B6B7C" >ASSET_DOWNTIME_IMPACT</text>
+<text x="1890" y="883" font-size="14" fill="#5B6B7C" text-anchor="end">Legend: blue = OT · indigo = IT · purple = unstructured · green = ML · orange = Cortex AI · red = actions</text>
+</svg>
