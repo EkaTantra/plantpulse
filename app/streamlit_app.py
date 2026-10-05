@@ -629,8 +629,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div > .stElementCont
 .pp-stat-v { font-size: 1.25rem; font-weight: 760; color: var(--pp-ink); margin-top: 2px; }
 
 /* floor map */
-.pp-floor { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 12px; }
-@media (max-width: 1100px) { .pp-floor { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pp-floor, .pp-lines { display: grid; gap: 12px; }
+.pp-c1 { grid-template-columns: minmax(0, 1fr); } .pp-c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pp-c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pp-c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .pp-floor.pp-c3, .pp-floor.pp-c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pp-lane { background: var(--pp-soft); border: 1px solid var(--pp-line); border-radius: 14px; padding: 12px; }
 .pp-lane-h { font-weight: 750; color: var(--pp-ink); font-size: .95rem; }
 .pp-lane-s { font-size: .76rem; color: var(--pp-muted); margin-bottom: 10px; }
@@ -647,7 +649,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div > .stElementCont
 .pp-tile-mode { margin-top: 4px; font-size: .72rem; color: var(--pp-ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* line OEE cards */
-.pp-lines { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
+.pp-lines { margin-bottom: 10px; }
 .pp-line-v { font-size: 1.7rem; font-weight: 780; color: var(--pp-ink); }
 .pp-apq { display: flex; gap: 12px; font-size: .78rem; color: var(--pp-ink2); margin-top: 4px; }
 .pp-apq b { color: var(--pp-ink); }
@@ -967,7 +969,7 @@ def floor_map(line_ids):
         n_risk = int(g.RISK_BAND.isin(["HIGH", "MEDIUM"]).sum())
         lanes.append(f"""<div class="pp-lane"><div class="pp-lane-h">{lid}</div>
 <div class="pp-lane-s">{short_line(lid)} · {n_risk} at risk</div><div class="pp-tiles">{''.join(tiles)}</div></div>""")
-    html(f'<div class="pp-floor" style="--cols:{min(len(lanes), 4)}">{"".join(lanes)}</div>')
+    html(f'<div class="pp-floor pp-c{max(1, min(len(lanes), 4))}">{"".join(lanes)}</div>')
 
 
 def line_cards():
@@ -983,7 +985,7 @@ def line_cards():
 · {bd.get(lid, 0):.0f} h breakdowns</div>
 <div class="pp-apq"><span>A <b>{v.AVAILABILITY:.1%}</b></span><span>P <b>{v.PERFORMANCE:.1%}</b></span>
 <span>Q <b>{v.QUALITY:.1%}</b></span></div></div>""")
-    html(f'<div class="pp-lines" style="--cols:{max(len(cards), 1)}">{"".join(cards)}</div>')
+    html(f'<div class="pp-lines pp-c{max(1, min(len(cards), 4))}">{"".join(cards)}</div>')
     return per_line
 
 
