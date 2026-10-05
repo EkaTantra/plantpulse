@@ -77,6 +77,7 @@ Always query live data. Never invent readings, dates or document IDs. Cite only 
 - "Now" is `AS_OF_TS`. Compute "days ago" from it and the WO dates.
 - If the suspected mode is `SENSOR_FAULT`, say plainly that the machine is healthy, and cite DOC-019.
 - If the LLM call fails, the procedure returns a rule-based fallback. Use it and say so.
+- `ML_PROB` is the probability of a functional failure within 72 hours. It is not the probability of a particular failure mode; the mode comes from the rule signature (`SUSPECTED_MODE`). Word it that way.
 
 ## Example
 User: `/root-cause-investigator Why is PUN-L1-GBX-01 vibration rising and what should we do?`

@@ -74,6 +74,8 @@ It returns JSON with `sql`, `columns`, `rows` (up to 50), a grounded `answer` an
 - Express OEE components as percentages with 1 decimal place, and losses in minutes and hours.
 - Performance is usually the largest loss bucket, because of speed losses. Say so, but keep the maintenance link to availability and to performance during degradation.
 - Note that the data is synthetic whenever you quote money.
+- For avoided cost, use `BREAKDOWN_COST_INR` from `ASSET_DOWNTIME_IMPACT` (corrective work only), never total maintenance cost, which includes preventive work.
+- Never recommend changing a work order's priority outside the plant policy (DOC-016): P1 is only for a line that has already stopped. Recommend executing the existing WO within its window instead.
 
 ## Example
 User: `/oee-analyst Which line has the worst OEE and what is it costing us?`

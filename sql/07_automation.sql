@@ -259,7 +259,7 @@ Include: lockout/tagout first, inspection checks that confirm the diagnosis, cor
 (vibration and temperature back within baseline), and what to record in the closing notes.
 Asset: {a['ASSET_ID']} ({a['ASSET_TYPE']}), suspected failure mode: {mode}, priority {priority}.
 Diagnosis context: {rca.get('answer', '')}
-Parts reserved: {'; '.join(part_lines) or 'none'}"""
+Parts reserved (use exactly these part numbers and quantities): {'; '.join(part_lines) or 'none'}"""
     try:
         plan = _complete(session, prompt)
     except Exception:
