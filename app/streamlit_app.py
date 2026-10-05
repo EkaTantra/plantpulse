@@ -17,7 +17,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="PlantPulse Command Center", page_icon="⚙️",
+st.set_page_config(layout="wide", page_title="PlantPulse Command Center", page_icon="❄️",
                    initial_sidebar_state="collapsed")
 
 DB = "PLANTPULSE"
@@ -494,40 +494,42 @@ LIVE = repo.mode == "live"
 
 # ----------------------------------------------------------------------------- theme
 INK, INK2, MUTED, GRID, AXIS = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
-NAVY, BRAND, SKY = "#0B1F3A", "#11567F", "#29B5E8"
+NAVY, BRAND, SKY = "#11567F", "#11567F", "#29B5E8"   # Snowflake Mid-Blue / Snowflake Blue
 STATUS = {"good": "#0ca30c", "warning": "#fab219", "serious": "#ec835a", "critical": "#d03b3b", "info": "#6b7785"}
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]       # validated categorical order (CVD-safe)
 CRIT_RAMP = {"A": "#1c5cab", "B": "#5598e7", "C": "#9ec5f4"}  # ordinal blue ramp for criticality
-SEV_STYLE = {"CRITICAL": ("critical", "⛔"), "WARNING": ("warning", "⚠"), "INFO": ("info", "ℹ")}
-BAND_STYLE = {"HIGH": ("critical", "⛔"), "MEDIUM": ("warning", "⚠"), "LOW": ("good", "✓")}
+SEV_STYLE = {"CRITICAL": ("critical", "●"), "WARNING": ("warning", "▲"), "INFO": ("info", "ℹ")}
+BAND_STYLE = {"HIGH": ("critical", "●"), "MEDIUM": ("warning", "▲"), "LOW": ("good", "✓")}
 PRIO_STYLE = {"P1": "critical", "P2": "serious", "P3": "warning", "P4": "info"}
-TYPE_ICON = {"Main Drive Motor": "⚡", "Coolant Pump": "💧", "Air Compressor": "🌀", "Gearbox": "⚙️",
-             "CNC Spindle": "🔩", "Conveyor Drive": "➿"}
+TYPE_ICON = {}
 TYPE_ORDER = ["Main Drive Motor", "Gearbox", "CNC Spindle", "Air Compressor", "Coolant Pump", "Conveyor Drive"]
 FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
-PAGES = ["🏠 Control Room", "🚨 Alerts", "🔍 Asset 360", "🧠 Copilot", "📈 OEE", "🛠 Work Orders", "🧩 How it works"]
+PAGES = ["Control Room", "Alerts", "Asset 360", "Copilot", "OEE", "Work Orders", "How It Works"]
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 st.markdown("""
 <style>
-:root { --pp-navy:#0B1F3A; --pp-brand:#11567F; --pp-sky:#29B5E8; --pp-ink:#0b0b0b; --pp-ink2:#52514e;
+:root { --pp-navy:#0D3B5C; --pp-brand:#11567F; --pp-sky:#29B5E8; --pp-ink:#0b0b0b; --pp-ink2:#52514e;
   --pp-muted:#898781; --pp-line:rgba(11,31,58,.12); --pp-soft:#f4f7fa;
   --pp-crit:#d03b3b; --pp-crit-t:#fbeaea; --pp-warn:#fab219; --pp-warn-t:#fff5dc; --pp-ser:#ec835a; --pp-ser-t:#fdeee7;
   --pp-good:#0ca30c; --pp-good-t:#e9f6e9; --pp-info:#6b7785; --pp-info-t:#eef1f4; }
 /* full-screen app: no sidebar, no Streamlit chrome */
 section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"],
-.stDeployButton, [data-testid="stAppDeployButton"] { display: none !important; }
+.stDeployButton, [data-testid="stAppDeployButton"], [data-testid="stToolbar"], [data-testid="stMainMenu"], #MainMenu,
+[data-testid="stDecoration"] { display: none !important; }
 header[data-testid="stHeader"] { background: transparent; height: 0; }
 .block-container { padding: 1.1rem 2.2rem 2.5rem; max-width: 100%; }
-.stApp { background: #f7f9fb; }
+.stApp { background: #ffffff; }
+[data-testid="stMain"], section.main, .block-container, [data-testid="stMainBlockContainer"],
+[data-testid="stAppViewBlockContainer"] { background: transparent !important; }
 
 /* app bar */
-.pp-appbar { background: linear-gradient(110deg, #0B1F3A 0%, #11567F 65%, #1b7fae 100%); color: #fff; border-radius: 16px;
+.pp-appbar { background: linear-gradient(110deg, #0D3B5C 0%, #11567F 45%, #1a86bd 100%); color: #fff; border-radius: 16px;
   padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
   box-shadow: 0 8px 24px rgba(11,31,58,.18); margin-bottom: 12px; }
 .pp-brand { display: flex; align-items: center; gap: 12px; }
-.pp-logo { width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25);
-  display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+.pp-logo { width: 42px; height: 42px; border-radius: 12px; background: #29B5E8; border: 1px solid rgba(255,255,255,.35);
+  display: flex; align-items: center; justify-content: center; font-size: 1.45rem; color: #fff; }
 .pp-brand-t { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
 .pp-brand-s { font-size: .78rem; color: #cfe3ee; }
 .pp-appbar-r { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -540,18 +542,27 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .pp-badge.live { background: rgba(12,163,12,.22); color: #c9f7c9; border: 1px solid rgba(80,220,80,.45); }
 .pp-badge.demo { background: rgba(250,178,25,.18); color: #ffe3a6; border: 1px solid rgba(250,178,25,.55); }
 
-/* top navigation and copilot mode: horizontal radios rendered as pills */
-.st-key-nav div[role="radiogroup"], .st-key-cop_mode div[role="radiogroup"] { flex-direction: row; flex-wrap: wrap; gap: 6px; }
-.st-key-nav label[data-testid="stRadioOption"], .st-key-cop_mode label[data-testid="stRadioOption"] , .st-key-nav label[data-baseweb="radio"], .st-key-cop_mode label[data-baseweb="radio"] { background: #fff;
-  border: 1px solid var(--pp-line); border-radius: 999px; padding: 7px 16px; margin: 0; cursor: pointer;
-  transition: all .12s; box-shadow: 0 1px 2px rgba(11,31,58,.05); }
-.st-key-nav label[data-testid="stRadioOption"]:hover, .st-key-cop_mode label[data-testid="stRadioOption"]:hover , .st-key-nav label[data-baseweb="radio"]:hover, .st-key-cop_mode label[data-baseweb="radio"]:hover { border-color: rgba(17,86,127,.5); }
-.st-key-nav label[data-testid="stRadioOption"][data-selected="true"], .st-key-cop_mode label[data-testid="stRadioOption"][data-selected="true"] , .st-key-nav label[data-baseweb="radio"]:has(input:checked), .st-key-cop_mode label[data-baseweb="radio"]:has(input:checked) {
-  background: var(--pp-brand); border-color: var(--pp-brand); box-shadow: 0 4px 12px rgba(17,86,127,.25); }
-.st-key-nav label[data-testid="stRadioOption"][data-selected="true"] p, .st-key-cop_mode label[data-testid="stRadioOption"][data-selected="true"] p , .st-key-nav label[data-baseweb="radio"]:has(input:checked) p, .st-key-cop_mode label[data-baseweb="radio"]:has(input:checked) p { color: #fff; }
-.st-key-nav label[data-testid="stRadioOption"] > div > div:first-child, .st-key-cop_mode label[data-testid="stRadioOption"] > div > div:first-child , .st-key-nav label[data-baseweb="radio"] > div:first-child, .st-key-cop_mode label[data-baseweb="radio"] > div:first-child { display: none; }
-.st-key-nav label p, .st-key-cop_mode label p { font-size: .9rem; font-weight: 650; color: var(--pp-ink2); white-space: nowrap; }
-.st-key-nav [data-testid="stWidgetLabel"], .st-key-cop_mode [data-testid="stWidgetLabel"] { display: none; }
+/* segmented controls (top navigation, copilot mode, time window): horizontal radios styled like Snowsight */
+.st-key-nav div[role="radiogroup"], .st-key-cop_mode div[role="radiogroup"], .st-key-a360_win div[role="radiogroup"] {
+  flex-direction: row; flex-wrap: nowrap; gap: 2px; width: fit-content; max-width: 100%; overflow-x: auto;
+  background: #fff; border: 1px solid #dbe3ea; border-radius: 10px; padding: 3px; box-shadow: 0 1px 2px rgba(13,59,92,.06); }
+.st-key-nav label[data-testid="stRadioOption"], .st-key-nav label[data-baseweb="radio"], .st-key-cop_mode label[data-testid="stRadioOption"], .st-key-cop_mode label[data-baseweb="radio"], .st-key-a360_win label[data-testid="stRadioOption"], .st-key-a360_win label[data-baseweb="radio"] { background: transparent; border: 0; border-radius: 8px; padding: 6px 14px; margin: 0; cursor: pointer;
+  transition: background .12s; }
+.st-key-nav label[data-testid="stRadioOption"]:hover, .st-key-nav label[data-baseweb="radio"]:hover, .st-key-cop_mode label[data-testid="stRadioOption"]:hover, .st-key-cop_mode label[data-baseweb="radio"]:hover, .st-key-a360_win label[data-testid="stRadioOption"]:hover, .st-key-a360_win label[data-baseweb="radio"]:hover { background: #eaf6fc; }
+.st-key-nav label[data-testid="stRadioOption"][data-selected="true"], .st-key-cop_mode label[data-testid="stRadioOption"][data-selected="true"], .st-key-a360_win label[data-testid="stRadioOption"][data-selected="true"], .st-key-nav label[data-baseweb="radio"]:has(input:checked), .st-key-cop_mode label[data-baseweb="radio"]:has(input:checked), .st-key-a360_win label[data-baseweb="radio"]:has(input:checked) {
+  background: var(--pp-brand); box-shadow: 0 2px 6px rgba(17,86,127,.28); }
+.st-key-nav label[data-testid="stRadioOption"][data-selected="true"] p, .st-key-cop_mode label[data-testid="stRadioOption"][data-selected="true"] p, .st-key-a360_win label[data-testid="stRadioOption"][data-selected="true"] p, .st-key-nav label[data-baseweb="radio"]:has(input:checked) p, .st-key-cop_mode label[data-baseweb="radio"]:has(input:checked) p, .st-key-a360_win label[data-baseweb="radio"]:has(input:checked) p { color: #fff; }
+.st-key-nav label[data-testid="stRadioOption"] > div > div:first-child, .st-key-cop_mode label[data-testid="stRadioOption"] > div > div:first-child, .st-key-a360_win label[data-testid="stRadioOption"] > div > div:first-child, .st-key-nav label[data-baseweb="radio"] > div:first-child, .st-key-cop_mode label[data-baseweb="radio"] > div:first-child, .st-key-a360_win label[data-baseweb="radio"] > div:first-child { display: none; }
+.st-key-nav label p, .st-key-cop_mode label p, .st-key-a360_win label p { font-size: .88rem; font-weight: 650; color: #3b4a59; white-space: nowrap;
+  margin: 0; line-height: 1.6; }
+.st-key-nav [data-testid="stWidgetLabel"], .st-key-cop_mode [data-testid="stWidgetLabel"], .st-key-a360_win [data-testid="stWidgetLabel"] { display: none; }
+/* filter-row controls share the segmented bar's height and border */
+.st-key-f_plant div[data-baseweb="select"] > div, .st-key-f_line div[data-baseweb="select"] > div { min-height: 40px;
+  border: 1px solid #dbe3ea; border-radius: 10px; background: #fff; }
+.st-key-f_sim button { min-height: 40px; border-radius: 10px; border: 1px solid var(--pp-brand); color: var(--pp-brand);
+  font-weight: 650; background: #fff; }
+.st-key-f_sim button p { color: var(--pp-brand); font-weight: 650; }
+.st-key-f_sim button:hover { background: #eaf6fc; }
 
 /* page header */
 .pp-ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 14px 0 12px; flex-wrap: wrap; }
@@ -564,7 +575,7 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .pp-kpi { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(11,31,58,.06); }
 .pp-kpi-top { display: flex; align-items: center; gap: 8px; color: var(--pp-ink2); font-size: .8rem; font-weight: 650; }
 .pp-ic { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-  font-size: .95rem; background: #e6f1f8; color: var(--pp-brand); flex: none; }
+  font-size: .9rem; font-weight: 800; background: #e3f5fc; color: var(--pp-brand); flex: none; }
 .pp-kpi-val { font-size: 1.95rem; font-weight: 760; color: var(--pp-ink); margin-top: 8px; line-height: 1.05; }
 .pp-kpi-sub { font-size: .78rem; color: var(--pp-muted); margin-top: 5px; }
 .pp-neg { color: #b42f2f; font-weight: 650; } .pp-pos { color: #006300; font-weight: 650; }
@@ -573,7 +584,8 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .pp-nba { border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;
   border: 1px solid rgba(208,59,59,.35); background: linear-gradient(90deg, var(--pp-crit-t), #fff 75%); }
 .pp-nba.good { border-color: rgba(12,163,12,.3); background: linear-gradient(90deg, var(--pp-good-t), #fff 75%); }
-.pp-nba .pp-ic { width: 42px; height: 42px; font-size: 1.2rem; background: #fff; }
+.pp-nba .pp-ic { width: 42px; height: 42px; font-size: 1.2rem; background: var(--pp-crit); color: #fff; }
+.pp-nba.good .pp-ic { background: var(--pp-good); }
 .pp-nba-k { font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--pp-ink2); }
 .pp-nba-t { font-weight: 750; color: var(--pp-ink); font-size: 1.02rem; }
 .pp-nba-s { color: var(--pp-ink2); font-size: .86rem; }
@@ -592,7 +604,6 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .pp-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 8px 0 8px; }
 .pp-sec-t { font-size: 1.02rem; font-weight: 750; color: var(--pp-ink); }
 .pp-sec-s { font-size: .8rem; color: var(--pp-muted); }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div > .stElementContainer) { background: #fff; }
 
 /* alert queue cards */
 .st-key-alert_pick, .st-key-alert_pick [data-testid="stRadio"], .st-key-alert_pick [data-testid="stRadioGroup"] { width: 100%; }
@@ -668,11 +679,16 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div > .stElementCont
 .pp-ticket-id { font-weight: 800; color: var(--pp-brand); font-size: 1rem; }
 .pp-ticket-s { font-size: .84rem; color: var(--pp-ink2); margin-top: 3px; }
 
+.pp-empty { text-align: center; padding: 52px 24px; }
+.pp-empty-ic { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px; background: #e3f5fc; color: #29B5E8;
+  display: flex; align-items: center; justify-content: center; font-size: 1.7rem; }
+.pp-legend { font-size: .8rem; color: var(--pp-ink2); line-height: 1.9; }
+
 /* how it works */
 .pp-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1200px) { .pp-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .pp-step { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 14px; }
-.pp-step-n { width: 28px; height: 28px; border-radius: 50%; background: var(--pp-brand); color: #fff; font-weight: 800;
+.pp-step-n { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #11567F, #29B5E8); color: #fff; font-weight: 800;
   display: flex; align-items: center; justify-content: center; font-size: .85rem; }
 .pp-step-t { font-weight: 750; margin: 8px 0 4px; color: var(--pp-ink); }
 .pp-step-s { font-size: .8rem; color: var(--pp-ink2); line-height: 1.45; }
@@ -764,27 +780,28 @@ pills = "".join(f'<span class="pp-pill"><b>{int(sev_counts.get(s, 0))}</b> {SEV_
                 for s in ["CRITICAL", "WARNING", "INFO"])
 badge = ('<span class="pp-badge live">● LIVE · SNOWFLAKE</span>' if LIVE
          else '<span class="pp-badge demo">● DEMO · SYNTHETIC DATA</span>')
-html(f"""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">⚙</div><div>
+html(f"""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">❄︎</div><div>
 <div class="pp-brand-t">PlantPulse</div><div class="pp-brand-s">Predictive maintenance &amp; OEE command center · Pune &amp; Chennai</div>
 </div></div><div class="pp-appbar-r"><div class="pp-fresh">Telemetry as of <b>{as_of:%d %b %Y, %H:%M}</b><br>
 scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot"}</div>{pills}{badge}</div></div>""")
 
 if st.session_state.get("nav") not in PAGES:
     st.session_state["nav"] = PAGES[0]
-n1, n2, n3, n4 = st.columns([7.2, 1.5, 1.5, 1.3], gap="small", vertical_alignment="center") if ST_VER >= (1, 36) \
-    else st.columns([7.2, 1.5, 1.5, 1.3], gap="small")
+n1, n2, n3, n4 = st.columns([6.6, 1.45, 1.45, 1.5], gap="small", vertical_alignment="center") if ST_VER >= (1, 36) \
+    else st.columns([6.6, 1.45, 1.45, 1.5], gap="small")
 with n1:
     page = st.radio("Navigation", PAGES, key="nav", horizontal=True, label_visibility="collapsed")
 with n2:
     plants = ["All plants"] + sorted(lines.PLANT_NAME.unique().tolist())
-    plant = st.selectbox("Plant", plants, label_visibility="collapsed")
+    plant = st.selectbox("Plant", plants, key="f_plant", label_visibility="collapsed")
 with n3:
     line_opts = lines if plant == "All plants" else lines[lines.PLANT_NAME == plant]
-    line = st.selectbox("Line", ["All lines"] + line_opts.LINE_ID.tolist(), label_visibility="collapsed",
+    line = st.selectbox("Line", ["All lines"] + line_opts.LINE_ID.tolist(), key="f_line", label_visibility="collapsed",
                         format_func=lambda x: x if x == "All lines" else f"{x} · {short_line(x)}")
 with n4:
-    sim = st.button("▶ Next hour", help="Simulate the next hour of sensor data, rescore every asset and raise alerts "
-                                        "(runs in Snowflake; live mode only)", **stretch("button"))
+    sim = st.button("▶  Simulate next hour", key="f_sim",
+                    help="Stream the next hour of sensor data, rescore every asset and raise alerts "
+                         "(runs in Snowflake; live mode only)", **stretch("button"))
 sel_lines = line_opts.LINE_ID.tolist() if line == "All lines" else [line]
 if sim:
     if LIVE:
@@ -843,22 +860,22 @@ def kpi_row():
                f'<span class="{"pp-pos" if gap >= 0 else "pp-neg"}">{"▲" if gap >= 0 else "▼"} {abs(gap):.1f} pp</span> vs 80% target')
     n_high, n_med = int((f_risk.RISK_BAND == "HIGH").sum()), int((f_risk.RISK_BAND == "MEDIUM").sum())
     html('<div class="pp-kpis">' + "".join([
-        kpi("📈", "Fleet OEE · 7 days", fnum(oee_7 * 100, "{:.1f}%"), gap_txt,
+        kpi("%", "Fleet OEE · 7 days", fnum(oee_7 * 100, "{:.1f}%"), gap_txt,
             f"Mean daily OEE over the 7 production days to {last_day:%Y-%m-%d}. Previous 7 days: {fnum(oee_prev * 100, '{:.1f}%')}."),
-        kpi("🛡", "Assets at risk", f"{n_high + n_med}", f'<span class="pp-neg">{n_high} high</span> · {n_med} medium of {len(f_risk)}',
+        kpi("!", "Assets at risk", f"{n_high + n_med}", f'<span class="pp-neg">{n_high} high</span> · {n_med} medium of {len(f_risk)}',
             "Risk bands: HIGH >= 50, MEDIUM >= 30." + ("" if LIVE else " Demo mode uses the rule score only.")),
-        kpi("🔔", "Open alerts", f"{len(open_alerts)}",
+        kpi("◉", "Open alerts", f"{len(open_alerts)}",
             f'{int((f_alerts.STATUS == "DISMISSED").sum())} dismissed · {int((f_alerts.STATUS == "WO_CREATED").sum())} actioned',
             "Alerts with status NEW or ACKNOWLEDGED."),
-        kpi("🛠", "Open predictive WOs", f"{len(open_pdm)}",
+        kpi("✓", "Open predictive WOs", f"{len(open_pdm)}",
             f'{int((open_pdm.PRIORITY == "P2").sum())} urgent (P2)' if len(open_pdm) else "raise one from Alerts"),
-        kpi("⏱", "Avoidable downtime", f"~{avoidable:.0f} h", f"if the {len(at_risk)} predicted failures are prevented",
+        kpi("◷", "Avoidable downtime", f"~{avoidable:.0f} h", f"if the {len(at_risk)} predicted failures are prevented",
             "For every HIGH/MEDIUM asset with a predicted failure mode, the average downtime of past breakdowns with the "
             "same failure mode (ERP failure history), summed."),
     ]) + "</div>")
 
 
-def trend_chart(asset_id, col, base, alarm, unit, days=7, color=SERIES[0], height=240):
+def trend_chart(asset_id, col, base, alarm, unit, days=7, color=SERIES[0], height=240, base_label=True):
     h = repo.hourly(asset_id, days)
     fig = go.Figure()
     if len(h):
@@ -873,8 +890,11 @@ def trend_chart(asset_id, col, base, alarm, unit, days=7, color=SERIES[0], heigh
                       annotation_text=f"alarm {alarm:.1f}", annotation_position="top left",
                       annotation_font=dict(color="#a32626", size=11))
     if base is not None and not pd.isna(base):
-        fig.add_hline(y=base, line=dict(color=INK2, dash="dot", width=1.5), annotation_text=f"baseline {base:.1f}",
-                      annotation_position="bottom right", annotation_font=dict(color=INK2, size=11))
+        if base_label:
+            fig.add_hline(y=base, line=dict(color=INK2, dash="dot", width=1.5), annotation_text=f"baseline {base:.1f}",
+                          annotation_position="bottom right", annotation_font=dict(color=INK2, size=11))
+        else:
+            fig.add_hline(y=base, line=dict(color=INK2, dash="dot", width=1.5))
     if not (pd.isna(lo) or pd.isna(hi)):
         pad = (hi - lo) * 0.12 + 0.1
         fig.update_yaxes(range=[lo - pad, hi + pad])
@@ -905,12 +925,12 @@ def threshold_bar(label, unit, val, base, alarm, lo=0.0, digits=2):
             f'<span style="color:#a32626">alarm {float(alarm):.1f}</span></div></div>')
 
 
-def stats(items):
-    return '<div class="pp-stats">' + "".join(
+def stats(items, cols=4):
+    return f'<div class="pp-stats" style="grid-template-columns:repeat({cols},minmax(0,1fr))">' + "".join(
         f'<div class="pp-stat"><div class="pp-stat-l">{l}</div><div class="pp-stat-v">{v}</div></div>' for l, v in items) + "</div>"
 
 
-def risk_gauge(score, height=210):
+def risk_gauge(score, height=225):
     g = go.Figure(go.Indicator(
         mode="gauge+number", value=float(score), number=dict(font=dict(size=40, color=INK, family=FONT)),
         title=dict(text="Failure risk (0–100)", font=dict(size=13, color=INK2)),
@@ -918,14 +938,14 @@ def risk_gauge(score, height=210):
                    bar=dict(color=NAVY, thickness=0.28), bgcolor="#eef1f4", borderwidth=0,
                    steps=[dict(range=[0, 30], color="#dff1df"), dict(range=[30, 50], color="#fdebc2"),
                           dict(range=[50, 100], color="#f6cfcf")])))
-    st.plotly_chart(style_fig(g, height, margin=dict(l=24, r=24, t=40, b=0)), **stretch())
+    st.plotly_chart(style_fig(g, height, margin=dict(l=34, r=34, t=42, b=18)), **stretch())
 
 
 def asset_card(asset_id, kicker=""):
     a = rk_all.loc[asset_id]
     html(f"""<div class="pp-card"><div class="pp-asset-h"><div>
 <div class="pp-asset-k">{kicker}</div>
-<div class="pp-asset-t">{TYPE_ICON.get(a.ASSET_TYPE, '⚙')} {a.ASSET_NAME}<span>{asset_id}</span></div>
+<div class="pp-asset-t">{a.ASSET_NAME}<span>{asset_id}</span></div>
 <div class="pp-asset-s">{a.ASSET_TYPE} · line {a.LINE_ID} ({short_line(a.LINE_ID)}) · {a.PLANT_NAME} · criticality {a.CRITICALITY}
 · telemetry {pd.to_datetime(a.AS_OF_TS):%d %b %H:%M}</div></div>
 <div>{band_chip(a.RISK_BAND, a.SUSPECTED_MODE)} {chip(pretty(a.SUSPECTED_MODE) if a.SUSPECTED_MODE != 'NONE' else 'Healthy', 'brand')}</div>
@@ -961,7 +981,7 @@ def floor_map(line_ids):
             mode = "Healthy" if a.SUSPECTED_MODE == "NONE" else pretty(a.SUSPECTED_MODE)
             eta = "" if a.SUSPECTED_MODE in ("NONE", "SENSOR_FAULT") else f" · {fmt_hours(a.HOURS_TO_ALARM)}"
             tiles.append(f"""<div class="pp-tile {kind if kind != 'good' else ''}" title="{a.ASSET_ID}: {mode}">
-<div class="pp-tile-top"><span class="pp-tile-id">{TYPE_ICON.get(a.ASSET_TYPE, '⚙')} {a.ASSET_ID.split('-', 2)[-1]}</span>
+<div class="pp-tile-top"><span class="pp-tile-id">{a.ASSET_ID.split('-', 2)[-1]}</span>
 <span class="pp-tile-risk" title="risk score 0-100">{a.RISK_SCORE:.0f}</span></div>
 <div class="pp-tile-type">{a.ASSET_TYPE}</div>
 <div class="pp-tile-foot">{band_chip(a.RISK_BAND, a.SUSPECTED_MODE)}</div>
@@ -1033,21 +1053,21 @@ def render_wo_result(res):
         st.info(f"Work order {res.get('wo_id')} already exists for this alert.")
         return
     prio = res.get("priority")
-    html(f"""<div class="pp-ticket"><div><div class="pp-ticket-id">✅ {res.get('wo_id')} created
+    html(f"""<div class="pp-ticket"><div><div class="pp-ticket-id">✓ {res.get('wo_id')} created
 {chip(prio, PRIO_STYLE.get(prio, 'info'))} {chip('OPEN', 'brand')}</div>
 <div class="pp-ticket-s">{res.get('priority_reason')} · schedule within {res.get('schedule_within_hours')} h</div></div></div>""")
     c1, c2 = st.columns([1, 1], gap="medium")
     with c1:
         section("Parts reserved", "stock checked in ERP")
         for p in res.get("parts") or ["No parts required"]:
-            html(f'<div class="pp-src">{chip("SHORTAGE", "critical", "⚠") if "SHORTAGE" in p else chip("IN STOCK", "good", "✓")}'
+            html(f'<div class="pp-src">{chip("SHORTAGE", "critical", "▲") if "SHORTAGE" in p else chip("IN STOCK", "good", "✓")}'
                  f'<span>{p.replace(" - SHORTAGE", "")}</span></div>')
         prs = res.get("purchase_requisitions") or []
         if prs:
             section("Purchase requisitions raised")
             for p in prs:
                 html(f'<div class="pp-src">{chip(p.get("pr_id"), "brand")}<span>{p.get("part_no")} × {p.get("qty")}</span>'
-                     f'{chip("EXPEDITE", "critical", "⚡") if p.get("expedite") else ""}</div>')
+                     f'{chip("EXPEDITE", "critical", "»") if p.get("expedite") else ""}</div>')
     with c2:
         section("Job plan", "drafted from diagnosis, history and manuals")
         with st.container(border=True):
@@ -1071,7 +1091,7 @@ def asset_picker(key, options):
     cur = st.session_state.get("focus_asset")
     idx = options.index(cur) if cur in options else 0
     v = st.selectbox("Asset", options, index=idx, key=key, label_visibility="collapsed",
-                     format_func=lambda a: f"{TYPE_ICON.get(rk_all.ASSET_TYPE[a], '⚙')} {a} · {rk_all.ASSET_NAME[a]}"
+                     format_func=lambda a: f"{a} · {rk_all.ASSET_NAME[a]}"
                                            f" · risk {rk_all.RISK_SCORE[a]:.0f}")
     st.session_state["focus_asset"] = v
     return v
@@ -1089,11 +1109,11 @@ def page_control_room():
             t = top.iloc[0]
             act = ("create a P2 predictive work order within 24 h" if t.SEVERITY == "CRITICAL"
                    else "investigate the root cause and plan the job")
-            html(f"""<div class="pp-nba"><span class="pp-ic">🎯</span><div><div class="pp-nba-k">Next best action</div>
+            html(f"""<div class="pp-nba"><span class="pp-ic">!</span><div><div class="pp-nba-k">Next best action</div>
 <div class="pp-nba-t">{t.ALERT_ID} · {t.ASSET_NAME} ({t.ASSET_ID}): {pretty(t.SUSPECTED_MODE).lower()} predicted,
 alarm limit in {fmt_hours(t.HOURS_TO_ALARM)}</div><div class="pp-nba-s">Recommended: {act}.</div></div></div>""")
         else:
-            html('<div class="pp-nba good"><span class="pp-ic">✅</span><div><div class="pp-nba-k">Next best action</div>'
+            html('<div class="pp-nba good"><span class="pp-ic">✓</span><div><div class="pp-nba-k">Next best action</div>'
                  '<div class="pp-nba-t">No open predictive alerts for this selection</div>'
                  '<div class="pp-nba-s">Every alert has been actioned or dismissed.</div></div></div>')
     with a2:
@@ -1154,6 +1174,11 @@ def page_alerts():
 
         alert_id = st.radio("Alert queue", q.ALERT_ID.tolist(), key="alert_pick", format_func=_label,
                             label_visibility="collapsed")
+        html(f"""<div class="pp-card" style="margin-top:14px"><div class="pp-asset-k">How alerts are ranked</div>
+<div class="pp-legend">{sev_chip("CRITICAL")} high risk on a criticality-A asset (stops the line)<br>
+{sev_chip("WARNING")} high or medium risk on a B/C asset<br>
+{sev_chip("INFO")} sensor fault: instrument check, machine healthy<br>
+Risk = 60% Snowflake ML probability + 40% explainable rules.</div></div>""")
     al = lab.loc[alert_id]
     with right:
         wo_txt = f" · {al.WO_ID}" if isinstance(al.WO_ID, str) and al.WO_ID else ""
@@ -1182,9 +1207,9 @@ def page_alerts():
                            **stretch("button")):
                 st.session_state["flash"] = ("info", repo.triage(alert_id, "DISMISS", note or "False alarm", user))
                 rerun()
-            b[2].button("🧠 Ask copilot", key=f"ask_{alert_id}", on_click=goto, args=(PAGES[3], al.ASSET_ID),
+            b[2].button("Ask copilot", key=f"ask_{alert_id}", on_click=goto, args=(PAGES[3], al.ASSET_ID),
                         **stretch("button"))
-            if b[3].button("🛠 Create work order", key=f"wo_{alert_id}", type="primary",
+            if b[3].button("Create work order", key=f"wo_{alert_id}", type="primary",
                            disabled=status not in OPEN_ALERT, **stretch("button")):
                 with st.spinner("Diagnosing, checking spares and drafting the job plan (about 30–40 s in live mode)..."):
                     try:
@@ -1219,14 +1244,16 @@ def page_asset_360():
     if not opts:
         st.info("No assets for the selected filter.")
         return
-    p1, p2, p3 = st.columns([4, 3, 2])
+    p1, p2, p3 = st.columns([4, 3.2, 1.8], vertical_alignment="center") if ST_VER >= (1, 36) \
+        else st.columns([4, 3.2, 1.8])
     with p1:
         asset = asset_picker("a360_pick", opts)
     with p2:
-        days = st.select_slider("Window", options=[3, 7, 14, 30, 60], value=14, format_func=lambda d: f"{d} days",
-                                label_visibility="collapsed")
+        win = st.radio("Window", ["3 days", "7 days", "14 days", "30 days", "60 days"], index=2, key="a360_win",
+                       horizontal=True, label_visibility="collapsed")
+        days = int(win.split()[0])
     with p3:
-        st.button("🧠 Ask copilot about it", on_click=goto, args=(PAGES[3], asset), key="a360_ask", **stretch("button"))
+        st.button("Ask copilot about this asset", on_click=goto, args=(PAGES[3], asset), key="a360_ask", **stretch("button"))
     a = rk_all.loc[asset]
     asset_card(asset, f"{a.LINE_ID} · {a.PLANT_NAME}")
     bv, bt = evidence_block(asset)
@@ -1241,12 +1268,13 @@ def page_asset_360():
     t3, t4 = st.columns(2, gap="medium")
     with t3:
         section(f"Motor current · last {days} days", "A, hourly")
-        trend_chart(asset, "CUR_AVG", bc, None, "A", days, SERIES[2], height=200)
+        trend_chart(asset, "CUR_AVG", bc, None, "A", days, SERIES[2], height=200, base_label=False)
     with t4:
         section(f"Shaft speed · last {days} days", "rpm, hourly")
         trend_chart(asset, "RPM_AVG", None, None, "rpm", days, SERIES[3], height=200)
     hist = wos[wos.ASSET_ID == asset][["WO_ID", "WO_TYPE", "PRIORITY", "STATUS", "CREATED_TS", "FAILURE_MODE",
-                                       "DOWNTIME_HOURS", "TECHNICIAN_NOTES"]]
+                                       "DOWNTIME_HOURS", "TECHNICIAN_NOTES"]].copy()
+    hist["FAILURE_MODE"] = hist.FAILURE_MODE.map(lambda m: pretty(m) if isinstance(m, str) and m else "–")
     section(f"Maintenance history · {asset}", f"{len(hist)} work orders (PM preventive · CM breakdown · PDM predictive)")
     st.dataframe(hist, hide_index=True, **stretch(), column_config={
         "WO_ID": "Work order", "WO_TYPE": "Type", "PRIORITY": "Priority", "STATUS": "Status",
@@ -1285,9 +1313,9 @@ def page_copilot():
                            "over the governed semantic view")
     left, right = st.columns([4, 8], gap="large")
     with left:
-        mode = st.radio("Mode", ["🔧 Root cause", "📊 Plant analytics"],
+        mode = st.radio("Mode", ["Root cause", "Plant analytics"],
                         key="cop_mode", horizontal=True, label_visibility="collapsed")
-        rca = mode.startswith("🔧")
+        rca = mode == "Root cause"
         asked, asset = None, None
         if rca:
             opts = f_risk.sort_values("RISK_SCORE", ascending=False).ASSET_ID.tolist() or risk.ASSET_ID.tolist()
@@ -1334,26 +1362,25 @@ def page_copilot():
                      "res": res if isinstance(res, dict) else {"answer": str(res)}})
     with right:
         if not chat:
-            html("""<div class="pp-card" style="text-align:center;padding:56px 24px">
-<div style="font-size:2.4rem">🧠</div><div class="pp-sec-t">Ask PlantPulse</div>
+            html("""<div class="pp-card pp-empty"><div class="pp-empty-ic">❄︎</div><div class="pp-sec-t">Ask PlantPulse</div>
 <div class="pp-asset-s" style="margin-top:6px">Root-cause answers cite the manuals (DOC-…) and past work orders (WO-…)
 they rely on.<br>Analytics answers show the governed query that produced every number.</div></div>""")
         for i, m in enumerate(reversed(chat[-6:])):
             res = m["res"]
-            html(f'<div class="pp-q">🙋 {m["q"]}' + (f' <span style="opacity:.75">· {m["asset"]}</span>' if m["asset"] else "")
+            html(f'<div class="pp-q">{m["q"]}' + (f' <span style="opacity:.75">· {m["asset"]}</span>' if m["asset"] else "")
                  + "</div>")
             if res.get("error"):
                 st.error(res["error"])
                 continue
             with st.container(border=True):
                 if m["kind"] == "rca":
-                    html(f'<div class="pp-asset-k">🧠 Root-cause brief · {m["asset"]}</div>')
+                    html(f'<div class="pp-asset-k">Root-cause brief · {m["asset"]}</div>')
                     st.markdown(compact_md(res.get("answer", "")))
                     if res.get("sources"):
                         with st.expander(f"Cited sources ({len(res['sources'])})", expanded=i == 0):
                             html(source_rows(res["sources"]))
                 else:
-                    html(f'<div class="pp-asset-k">📊 Plant analytics · {res.get("engine", "")}</div>')
+                    html(f'<div class="pp-asset-k">Plant analytics · {res.get("engine", "")}</div>')
                     st.markdown(f"**{res.get('answer', '')}**")
                     rows, cols = res.get("rows") or [], res.get("columns") or []
                     if rows:
@@ -1381,8 +1408,7 @@ def page_oee():
         for lid, g in f_oee.groupby("LINE_ID"):
             fig.add_trace(go.Scatter(x=g.PROD_DATE, y=g.OEE, mode="lines", name=lid, line=dict(width=1.75, color=line_color(lid)),
                                      hovertemplate=lid + " · %{x|%d %b}: <b>%{y:.1%}</b><extra></extra>"))
-        fig.add_hline(y=OEE_TARGET, line=dict(color=INK2, dash="dash", width=1.5), annotation_text="target 80%",
-                      annotation_position="bottom left", annotation_font=dict(color=INK2, size=11))
+        fig.add_hline(y=OEE_TARGET, line=dict(color=INK2, dash="dash", width=1.5))
         fig.update_yaxes(tickformat=".0%")
         st.plotly_chart(style_fig(fig, 340, hovermode="x unified"), **stretch())
     with o2:
@@ -1439,8 +1465,7 @@ def page_work_orders():
                                "breakdown history the copilot learns from")
     section("Open predictive work orders", f"{len(open_pdm)} open")
     if open_pdm.empty:
-        html("""<div class="pp-card" style="text-align:center;padding:32px">
-<div style="font-size:2rem">🛠</div><div class="pp-sec-t">No predictive work orders yet</div>
+        html("""<div class="pp-card pp-empty"><div class="pp-empty-ic">❄︎</div><div class="pp-sec-t">No predictive work orders yet</div>
 <div class="pp-asset-s" style="margin-top:6px">Create one from an alert in <b>Alerts</b>: priority, parts,
 purchase requisitions and a job plan are generated in one step.</div></div>""")
     for w in open_pdm.itertuples():
@@ -1462,13 +1487,15 @@ parts {w.PARTS_USED or '–'} · requested by {w.CREATED_BY}</div></div>
             "EXPEDITE": st.column_config.CheckboxColumn("Expedite"),
             "LEAD_TIME_DAYS": st.column_config.NumberColumn("Lead time (d)", format="%d")})
     section("Recent corrective (breakdown) work orders", "the history the copilot learns from")
-    cm = f_wos[f_wos.WO_TYPE == "CM"].sort_values("CREATED_TS", ascending=False).head(15)
+    cm = f_wos[f_wos.WO_TYPE == "CM"].sort_values("CREATED_TS", ascending=False).head(15).copy()
+    cm["FAILURE_MODE"] = cm.FAILURE_MODE.map(pretty)
+    cm["COST_INR"] = cm.COST_INR.map(lambda v: f"₹ {float(v):,.0f}" if pd.notna(v) else "–")
     st.dataframe(cm[["WO_ID", "ASSET_ID", "PRIORITY", "CREATED_TS", "FAILURE_MODE", "DOWNTIME_HOURS", "COST_INR",
                      "TECHNICIAN_NOTES"]], hide_index=True, **stretch(), column_config={
         "WO_ID": "Work order", "ASSET_ID": "Asset", "PRIORITY": "Priority",
         "CREATED_TS": st.column_config.DatetimeColumn("Created", format="DD MMM YYYY HH:mm"),
         "FAILURE_MODE": "Failure mode", "DOWNTIME_HOURS": st.column_config.NumberColumn("Downtime h", format="%.1f"),
-        "COST_INR": st.column_config.NumberColumn("Cost ₹", format="%d"),
+        "COST_INR": "Cost",
         "TECHNICIAN_NOTES": st.column_config.TextColumn("Technician notes", width="large")})
 
 
@@ -1522,17 +1549,22 @@ def page_how():
         if len(bt):
             lead = pd.to_numeric(bt.LEAD_TIME_HOURS, errors="coerce")
             html(stats([("Caught", f"{lead.notna().sum()}/{len(bt)}"), ("Median lead", f"{lead.median():.0f} h"),
-                        ("Mode correct", f"{bt.MODE_CORRECT.astype(bool).mean():.0%}"), ("False alarms", "0")]))
+                        ("Mode correct", f"{bt.MODE_CORRECT.astype(bool).mean():.0%}"), ("False alarms", "0")], cols=2))
         if LIVE:
             try:
-                mv = query(f"SELECT * FROM {DB}.ANALYTICS.ML_VALIDATION")
+                mv = query(f"SELECT METRIC, VALUE FROM {DB}.ANALYTICS.ML_VALIDATION").set_index("METRIC").VALUE
                 if len(mv):
-                    section("Out-of-time ML validation", "trained on earlier weeks, tested on later ones")
-                    st.dataframe(mv, hide_index=True, **stretch())
+                    section("Out-of-time ML test", "train before 15 Sep · test after")
+                    g = lambda k, f="{:.0f}": f.format(float(mv[k])) if k in mv.index else "–"
+                    html(stats([("Held-out failures", f"{g('events_detected')}/{g('events_total')}"),
+                                ("Median lead", f"{g('event_lead_time_median_h', '{:.1f}')} h"),
+                                ("Hourly F1", g("hourly_f1_at_0.5", "{:.2f}")),
+                                ("ROC AUC", g("hourly_roc_auc", "{:.3f}"))], cols=2))
             except Exception:
                 pass
         st.caption("All data is synthetic. Snowflake features: ML Classification · Cortex Search · Cortex AI · "
-                   "semantic views · ASOF JOIN · Snowpark Python · Tasks · Streamlit in Snowflake.")
+                   "Cortex Analyst · Cortex Agents · semantic views · ASOF JOIN · Snowpark Python · Tasks · "
+                   "Streamlit in Snowflake.")
 
 
 # ----------------------------------------------------------------------------- router
