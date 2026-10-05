@@ -1651,11 +1651,11 @@ STEPS = [
                "agent and dashboard.", "SEMANTIC VIEW PLANT_OPS_SV"),
 ]
 SKILLS = [
-    ("$plantpulse-setup", "Build, verify or reset the environment"),
-    ("$asset-health-triage", "Rescore, raise alerts, rank, flag false alarms → alert id"),
-    ("$root-cause-investigator", "Trend vs baseline + history + search + cited brief → diagnosis"),
-    ("$work-order-automator", "Policy, parts, PRs, job plan, verified in ERP → WO id"),
-    ("$oee-analyst", "Governed OEE, loss tree, asset impact, improvement case → OEE gain"),
+    ("/plantpulse-setup", "Build, verify or reset the environment"),
+    ("/asset-health-triage", "Rescore, raise alerts, rank, flag false alarms → alert id"),
+    ("/root-cause-investigator", "Trend vs baseline + history + search + cited brief → diagnosis"),
+    ("/work-order-automator", "Policy, parts, PRs, job plan, verified in ERP → WO id"),
+    ("/oee-analyst", "Governed OEE, loss tree, asset impact, improvement case → OEE gain"),
 ]
 
 
