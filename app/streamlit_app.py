@@ -684,6 +684,38 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
   display: flex; align-items: center; justify-content: center; font-size: 1.7rem; }
 .pp-legend { font-size: .8rem; color: var(--pp-ink2); line-height: 1.9; }
 
+/* busy modal: shown while a slow Snowflake call runs */
+.pp-modal { position: fixed; inset: 0; z-index: 999999; background: rgba(13,59,92,.38); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; }
+.pp-modal-card { background: #fff; border-radius: 16px; padding: 28px 34px; width: min(520px, 90vw); text-align: center;
+  box-shadow: 0 24px 60px rgba(13,59,92,.35); border: 1px solid #dbe3ea; }
+.pp-spin { width: 46px; height: 46px; margin: 0 auto 14px; border-radius: 50%; border: 4px solid #e3f5fc;
+  border-top-color: #29B5E8; border-right-color: #11567F; animation: pp-rot .9s linear infinite; }
+@keyframes pp-rot { to { transform: rotate(360deg); } }
+.pp-modal-t { font-size: 1.08rem; font-weight: 750; color: var(--pp-ink); }
+.pp-modal-s { font-size: .86rem; color: var(--pp-ink2); margin-top: 6px; line-height: 1.5; }
+.pp-modal-steps { text-align: left; margin: 14px auto 0; font-size: .84rem; color: var(--pp-ink2); line-height: 1.9;
+  width: fit-content; }
+.pp-modal-steps b { color: var(--pp-brand); }
+
+/* app bar as a keyed container so the severity pills can be real buttons */
+.st-key-appbar { background: linear-gradient(110deg, #0D3B5C 0%, #11567F 45%, #1a86bd 100%); border-radius: 16px;
+  padding: 12px 22px; box-shadow: 0 8px 24px rgba(17,86,127,.18); margin-bottom: 4px; }
+.st-key-appbar .pp-appbar { background: none; box-shadow: none; padding: 0; margin: 0; border-radius: 0; }
+.st-key-appbar [data-testid="stHorizontalBlock"] { align-items: center; }
+.st-key-appbar [data-testid="stMarkdownContainer"] p, .st-key-appbar .stMarkdown { margin-bottom: 0; }
+.st-key-appbar [data-testid="stElementContainer"], .st-key-appbar .element-container { margin-bottom: 0; }
+.st-key-sev_CRITICAL button, .st-key-sev_WARNING button, .st-key-sev_INFO button {
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.28); border-radius: 999px; min-height: 34px;
+  padding: 2px 12px; transition: background .12s, border-color .12s; }
+.st-key-sev_CRITICAL button p, .st-key-sev_WARNING button p, .st-key-sev_INFO button p { color: #fff; font-weight: 650;
+  font-size: .84rem; white-space: nowrap; }
+.st-key-sev_CRITICAL button:hover, .st-key-sev_WARNING button:hover, .st-key-sev_INFO button:hover {
+  background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.6); }
+.st-key-sev_CRITICAL button { border-color: rgba(255,140,140,.75); }
+.st-key-sev_WARNING button { border-color: rgba(250,200,90,.75); }
+.pp-filter { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--pp-ink2); margin: 0 0 6px; }
+
 /* how it works */
 .pp-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1200px) { .pp-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -736,6 +768,31 @@ def style_fig(fig, height=300, **kw):
     return fig
 
 
+def busy(title, sub, steps=()):
+    """Full-screen modal shown while a slow call runs; returns the placeholder to clear afterwards."""
+    ph = st.empty()
+    rows = "".join(f"<div><b>{i}.</b> {t}</div>" for i, t in enumerate(steps, 1))
+    ph.markdown(f"""<div class="pp-modal"><div class="pp-modal-card"><div class="pp-spin"></div>
+<div class="pp-modal-t">{title}</div><div class="pp-modal-s">{sub}</div>
+{f'<div class="pp-modal-steps">{rows}</div>' if rows else ''}</div></div>""", unsafe_allow_html=True)
+    return ph
+
+
+def run_busy(fn, title, sub, steps=()):
+    ph = busy(title, sub, steps)
+    try:
+        return fn()
+    finally:
+        ph.empty()
+
+
+def filter_severity(sev):
+    """App-bar pill callback: open the alert queue filtered to one severity."""
+    st.session_state["nav"] = "Alerts"
+    st.session_state["sev_filter"] = sev
+    st.session_state.pop("alert_pick", None)
+
+
 def goto(page, asset=None, alert=None):
     """Navigation callback: switch page and optionally focus an asset / alert."""
     st.session_state["nav"] = page
@@ -776,14 +833,26 @@ def line_color(line_id):
 # ----------------------------------------------------------------------------- app bar + navigation + filters
 open_all = alerts[alerts.STATUS.isin(OPEN_ALERT)]
 sev_counts = open_all.SEVERITY.value_counts()
-pills = "".join(f'<span class="pp-pill"><b>{int(sev_counts.get(s, 0))}</b> {SEV_STYLE[s][1]} {s.lower()}</span>'
-                for s in ["CRITICAL", "WARNING", "INFO"])
 badge = ('<span class="pp-badge live">● LIVE · SNOWFLAKE</span>' if LIVE
          else '<span class="pp-badge demo">● DEMO · SYNTHETIC DATA</span>')
-html(f"""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">❄︎</div><div>
+with st.container(key="appbar"):
+    b1, b2, b3, b4, b5, b6 = st.columns([5.2, 2.1, 1.05, 1.05, 0.85, 1.6], gap="small",
+                                        vertical_alignment="center") if ST_VER >= (1, 36) \
+        else st.columns([5.2, 2.1, 1.05, 1.05, 0.85, 1.6], gap="small")
+    with b1:
+        html("""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">❄︎</div><div>
 <div class="pp-brand-t">PlantPulse</div><div class="pp-brand-s">Predictive maintenance &amp; OEE command center · Pune &amp; Chennai</div>
-</div></div><div class="pp-appbar-r"><div class="pp-fresh">Telemetry as of <b>{as_of:%d %b %Y, %H:%M}</b><br>
-scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot"}</div>{pills}{badge}</div></div>""")
+</div></div></div>""")
+    with b2:
+        html(f"""<div class="pp-fresh">Telemetry as of <b>{as_of:%d %b %Y, %H:%M}</b><br>
+scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot"}</div>""")
+    for col, sev in zip((b3, b4, b5), ("CRITICAL", "WARNING", "INFO")):
+        with col:
+            st.button(f"{int(sev_counts.get(sev, 0))}  {SEV_STYLE[sev][1]}  {sev.lower()}", key=f"sev_{sev}",
+                      on_click=filter_severity, args=(sev,), help=f"Open the alert queue filtered to {sev.lower()} alerts",
+                      **stretch("button"))
+    with b6:
+        html(f'<div style="text-align:right;line-height:34px">{badge}</div>')
 
 if st.session_state.get("nav") not in PAGES:
     st.session_state["nav"] = PAGES[0]
@@ -805,11 +874,15 @@ with n4:
 sel_lines = line_opts.LINE_ID.tolist() if line == "All lines" else [line]
 if sim:
     if LIVE:
-        with st.spinner("Streaming 6 × 10-min readings, rescoring and raising alerts..."):
-            try:
-                st.session_state["flash"] = ("success", repo.simulate())
-            except Exception as e:
-                st.session_state["flash"] = ("error", f"Simulation failed: {e}")
+        try:
+            st.session_state["flash"] = ("success", run_busy(
+                repo.simulate, "Simulating the next hour of plant operation",
+                "Please keep this tab open. This runs inside Snowflake and takes about 20–40 seconds.",
+                ["Streaming 6 × 10-minute sensor readings for all 24 assets",
+                 "Rescoring every asset (Snowflake ML + explainable rules)",
+                 "Raising new predictive-maintenance alerts"]))
+        except Exception as e:
+            st.session_state["flash"] = ("error", f"Simulation failed: {e}")
         rerun()
     else:
         st.session_state["flash"] = ("info", "The live sensor stream runs inside Snowflake; the public demo uses a "
@@ -1155,12 +1228,26 @@ def page_alerts():
         st.info("No alerts for the selected plant / line.")
         return
     q = f_alerts.sort_values(["RISK_SCORE", "ALERT_ID"], ascending=[False, True])
+    sev_f = st.session_state.get("sev_filter")
+    if sev_f:
+        q = q[q.SEVERITY == sev_f]
+        if q.empty:
+            q = f_alerts.sort_values(["RISK_SCORE", "ALERT_ID"], ascending=[False, True])
+            st.session_state.pop("sev_filter", None)
+            sev_f = None
     lab = q.set_index("ALERT_ID")
     if st.session_state.get("alert_pick") not in lab.index:
         st.session_state.pop("alert_pick", None)
     left, right = st.columns([4, 8], gap="large")
     with left:
         section("Alert queue", f"{len(open_alerts)} open · ranked by risk")
+        if sev_f:
+            fc1, fc2 = st.columns([3, 1.2], vertical_alignment="center") if ST_VER >= (1, 36) else st.columns([3, 1.2])
+            with fc1:
+                html(f'<div class="pp-filter">Showing {sev_chip(sev_f)} alerts only</div>')
+            with fc2:
+                st.button("Show all", key="sev_clear", on_click=lambda: st.session_state.pop("sev_filter", None),
+                          **stretch("button"))
         colour = {"CRITICAL": "red", "WARNING": "orange", "INFO": "gray"}
 
         def _label(i):
@@ -1211,11 +1298,14 @@ Risk = 60% Snowflake ML probability + 40% explainable rules.</div></div>""")
                         **stretch("button"))
             if b[3].button("Create work order", key=f"wo_{alert_id}", type="primary",
                            disabled=status not in OPEN_ALERT, **stretch("button")):
-                with st.spinner("Diagnosing, checking spares and drafting the job plan (about 30–40 s in live mode)..."):
-                    try:
-                        res = repo.create_wo(alert_id, user)
-                    except Exception as e:
-                        res = {"error": f"Work-order creation failed: {e}"}
+                try:
+                    res = run_busy(lambda: repo.create_wo(alert_id, user), f"Creating the predictive work order for {alert_id}",
+                                   "Please keep this tab open. This takes about 30–40 seconds in live mode.",
+                                   ["Diagnosing the root cause from telemetry, history and manuals",
+                                    "Applying the priority policy and checking spare-parts stock",
+                                    "Drafting the job plan and writing the work order to ERP"])
+                except Exception as e:
+                    res = {"error": f"Work-order creation failed: {e}"}
                 st.session_state.setdefault("wo_results", {})[alert_id] = res
                 rerun()
         res = st.session_state.get("wo_results", {}).get(alert_id)
@@ -1348,16 +1438,23 @@ def page_copilot():
                    "Demo mode: answers come from local stand-ins over the same synthetic data.")
     chat = st.session_state.setdefault("chat", [])
     if asked:
-        with st.spinner("Thinking with your plant data" + (" (about 20 s)..." if LIVE else "...")):
-            try:
-                if rca:
-                    res = repo.root_cause(asset, asked)
-                elif LIVE:
-                    res = call(f"CALL {DB}.ANALYTICS.ASK_OEE({lit(asked)})")
-                else:
-                    res = demo_ask_oee(asked)
-            except Exception as e:
-                res = {"error": str(e)}
+        def _ask():
+            if rca:
+                return repo.root_cause(asset, asked)
+            if LIVE:
+                return call(f"CALL {DB}.ANALYTICS.ASK_OEE({lit(asked)})")
+            return demo_ask_oee(asked)
+        try:
+            res = run_busy(_ask, "Asking the PlantPulse copilot",
+                           "Please keep this tab open." + (" This takes about 20 seconds." if LIVE else ""),
+                           ["Retrieving manuals, SOPs and technician notes (Cortex Search)",
+                            "Grounding in live telemetry and CMMS history",
+                            "Writing a cited answer (Cortex AI)"] if rca else
+                           ["Translating the question into a governed semantic-view query (Cortex Analyst)",
+                            "Running it in Snowflake",
+                            "Summarising the result"])
+        except Exception as e:
+            res = {"error": str(e)}
         chat.append({"kind": "rca" if rca else "oee", "asset": asset, "q": asked,
                      "res": res if isinstance(res, dict) else {"answer": str(res)}})
     with right:
