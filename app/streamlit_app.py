@@ -17,7 +17,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="PlantPulse", page_icon="⚙️")
+st.set_page_config(layout="wide", page_title="PlantPulse Command Center", page_icon="⚙️",
+                   initial_sidebar_state="collapsed")
 
 DB = "PLANTPULSE"
 DEMO_NOW = pd.Timestamp("2026-10-05 00:00:00")
@@ -502,7 +503,10 @@ BAND_STYLE = {"HIGH": ("critical", "⛔"), "MEDIUM": ("warning", "⚠"), "LOW": 
 PRIO_STYLE = {"P1": "critical", "P2": "serious", "P3": "warning", "P4": "info"}
 TYPE_ICON = {"Main Drive Motor": "⚡", "Coolant Pump": "💧", "Air Compressor": "🌀", "Gearbox": "⚙️",
              "CNC Spindle": "🔩", "Conveyor Drive": "➿"}
+TYPE_ORDER = ["Main Drive Motor", "Gearbox", "CNC Spindle", "Air Compressor", "Coolant Pump", "Conveyor Drive"]
 FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+PAGES = ["🏠 Control Room", "🚨 Alerts", "🔍 Asset 360", "🧠 Copilot", "📈 OEE", "🛠 Work Orders", "🧩 How it works"]
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 st.markdown("""
 <style>
@@ -510,33 +514,54 @@ st.markdown("""
   --pp-muted:#898781; --pp-line:rgba(11,31,58,.12); --pp-soft:#f4f7fa;
   --pp-crit:#d03b3b; --pp-crit-t:#fbeaea; --pp-warn:#fab219; --pp-warn-t:#fff5dc; --pp-ser:#ec835a; --pp-ser-t:#fdeee7;
   --pp-good:#0ca30c; --pp-good-t:#e9f6e9; --pp-info:#6b7785; --pp-info-t:#eef1f4; }
-header[data-testid="stHeader"] { background: transparent; }
-.stDeployButton, [data-testid="stAppDeployButton"] { display: none; }
-.block-container { padding-top: 2.4rem; padding-bottom: 2.5rem; max-width: 1480px; }
-section[data-testid="stSidebar"] { background: var(--pp-soft); border-right: 1px solid var(--pp-line); }
-section[data-testid="stSidebar"] .block-container, section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 1.2rem; }
+/* full-screen app: no sidebar, no Streamlit chrome */
+section[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"],
+.stDeployButton, [data-testid="stAppDeployButton"] { display: none !important; }
+header[data-testid="stHeader"] { background: transparent; height: 0; }
+.block-container { padding: 1.1rem 2.2rem 2.5rem; max-width: 100%; }
+.stApp { background: #f7f9fb; }
 
-/* hero */
-.pp-hero { background: linear-gradient(118deg, #0B1F3A 0%, #11567F 62%, #1b7fae 100%); color: #fff; border-radius: 18px;
-  padding: 22px 28px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;
-  box-shadow: 0 10px 28px rgba(11,31,58,.20); margin-bottom: 16px; }
-.pp-eyebrow { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: #9fd8f0; font-weight: 700; }
-.pp-h1 { font-size: 2.05rem; font-weight: 800; line-height: 1.15; margin: 3px 0 5px; color: #fff; letter-spacing: -.01em; }
-.pp-hero-sub { color: #cfe3ee; font-size: .92rem; }
-.pp-hero-r { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.pp-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+/* app bar */
+.pp-appbar { background: linear-gradient(110deg, #0B1F3A 0%, #11567F 65%, #1b7fae 100%); color: #fff; border-radius: 16px;
+  padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  box-shadow: 0 8px 24px rgba(11,31,58,.18); margin-bottom: 12px; }
+.pp-brand { display: flex; align-items: center; gap: 12px; }
+.pp-logo { width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25);
+  display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+.pp-brand-t { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
+.pp-brand-s { font-size: .78rem; color: #cfe3ee; }
+.pp-appbar-r { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.pp-fresh { color: #cfe3ee; font-size: .8rem; margin-right: 6px; text-align: right; line-height: 1.3; }
+.pp-fresh b { color: #fff; }
 .pp-pill { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22); color: #fff; border-radius: 999px;
   padding: 5px 12px; font-size: .82rem; font-weight: 600; white-space: nowrap; }
 .pp-pill b { font-size: 1rem; margin-right: 2px; }
-.pp-badge { border-radius: 999px; padding: 4px 12px; font-size: .76rem; font-weight: 700; letter-spacing: .03em; }
-.pp-badge.live { background: rgba(12,163,12,.20); color: #c9f7c9; border: 1px solid rgba(80,220,80,.45); }
+.pp-badge { border-radius: 999px; padding: 5px 12px; font-size: .74rem; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+.pp-badge.live { background: rgba(12,163,12,.22); color: #c9f7c9; border: 1px solid rgba(80,220,80,.45); }
 .pp-badge.demo { background: rgba(250,178,25,.18); color: #ffe3a6; border: 1px solid rgba(250,178,25,.55); }
+
+/* top navigation and copilot mode: horizontal radios rendered as pills */
+.st-key-nav div[role="radiogroup"], .st-key-cop_mode div[role="radiogroup"] { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+.st-key-nav label[data-testid="stRadioOption"], .st-key-cop_mode label[data-testid="stRadioOption"] , .st-key-nav label[data-baseweb="radio"], .st-key-cop_mode label[data-baseweb="radio"] { background: #fff;
+  border: 1px solid var(--pp-line); border-radius: 999px; padding: 7px 16px; margin: 0; cursor: pointer;
+  transition: all .12s; box-shadow: 0 1px 2px rgba(11,31,58,.05); }
+.st-key-nav label[data-testid="stRadioOption"]:hover, .st-key-cop_mode label[data-testid="stRadioOption"]:hover , .st-key-nav label[data-baseweb="radio"]:hover, .st-key-cop_mode label[data-baseweb="radio"]:hover { border-color: rgba(17,86,127,.5); }
+.st-key-nav label[data-testid="stRadioOption"][data-selected="true"], .st-key-cop_mode label[data-testid="stRadioOption"][data-selected="true"] , .st-key-nav label[data-baseweb="radio"]:has(input:checked), .st-key-cop_mode label[data-baseweb="radio"]:has(input:checked) {
+  background: var(--pp-brand); border-color: var(--pp-brand); box-shadow: 0 4px 12px rgba(17,86,127,.25); }
+.st-key-nav label[data-testid="stRadioOption"][data-selected="true"] p, .st-key-cop_mode label[data-testid="stRadioOption"][data-selected="true"] p , .st-key-nav label[data-baseweb="radio"]:has(input:checked) p, .st-key-cop_mode label[data-baseweb="radio"]:has(input:checked) p { color: #fff; }
+.st-key-nav label[data-testid="stRadioOption"] > div > div:first-child, .st-key-cop_mode label[data-testid="stRadioOption"] > div > div:first-child , .st-key-nav label[data-baseweb="radio"] > div:first-child, .st-key-cop_mode label[data-baseweb="radio"] > div:first-child { display: none; }
+.st-key-nav label p, .st-key-cop_mode label p { font-size: .9rem; font-weight: 650; color: var(--pp-ink2); white-space: nowrap; }
+.st-key-nav [data-testid="stWidgetLabel"], .st-key-cop_mode [data-testid="stWidgetLabel"] { display: none; }
+
+/* page header */
+.pp-ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 14px 0 12px; flex-wrap: wrap; }
+.pp-ph-t { font-size: 1.55rem; font-weight: 800; color: var(--pp-ink); letter-spacing: -.01em; }
+.pp-ph-s { font-size: .9rem; color: var(--pp-ink2); margin-top: 2px; }
 
 /* KPI cards */
 .pp-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
 @media (max-width: 1150px) { .pp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.pp-kpi { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(11,31,58,.06); }
+.pp-kpi { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(11,31,58,.06); }
 .pp-kpi-top { display: flex; align-items: center; gap: 8px; color: var(--pp-ink2); font-size: .8rem; font-weight: 650; }
 .pp-ic { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
   font-size: .95rem; background: #e6f1f8; color: var(--pp-brand); flex: none; }
@@ -545,16 +570,15 @@ section[data-testid="stSidebar"] .block-container, section[data-testid="stSideba
 .pp-neg { color: #b42f2f; font-weight: 650; } .pp-pos { color: #006300; font-weight: 650; }
 
 /* next best action */
-.pp-nba { border-radius: 14px; padding: 12px 18px; display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
-  border: 1px solid var(--pp-line); background: #fff; }
-.pp-nba.critical { background: linear-gradient(90deg, var(--pp-crit-t), #fff 70%); border-color: rgba(208,59,59,.35); }
-.pp-nba.good { background: linear-gradient(90deg, var(--pp-good-t), #fff 70%); border-color: rgba(12,163,12,.3); }
-.pp-nba .pp-ic { width: 40px; height: 40px; font-size: 1.15rem; background: #fff; }
+.pp-nba { border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+  border: 1px solid rgba(208,59,59,.35); background: linear-gradient(90deg, var(--pp-crit-t), #fff 75%); }
+.pp-nba.good { border-color: rgba(12,163,12,.3); background: linear-gradient(90deg, var(--pp-good-t), #fff 75%); }
+.pp-nba .pp-ic { width: 42px; height: 42px; font-size: 1.2rem; background: #fff; }
 .pp-nba-k { font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--pp-ink2); }
-.pp-nba-t { font-weight: 700; color: var(--pp-ink); font-size: 1rem; }
+.pp-nba-t { font-weight: 750; color: var(--pp-ink); font-size: 1.02rem; }
 .pp-nba-s { color: var(--pp-ink2); font-size: .86rem; }
 
-/* chips, cards, section headers */
+/* chips, cards, sections */
 .pp-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font-size: .74rem;
   font-weight: 700; letter-spacing: .02em; border: 1px solid transparent; white-space: nowrap; vertical-align: middle; }
 .pp-chip.critical { background: var(--pp-crit-t); color: #a32626; border-color: rgba(208,59,59,.4); }
@@ -565,19 +589,12 @@ section[data-testid="stSidebar"] .block-container, section[data-testid="stSideba
 .pp-chip.brand { background: #e6f1f8; color: var(--pp-brand); border-color: rgba(17,86,127,.3); }
 .pp-card { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 14px 18px; margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(11,31,58,.05); }
-.pp-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 6px 0 8px; }
+.pp-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 8px 0 8px; }
 .pp-sec-t { font-size: 1.02rem; font-weight: 750; color: var(--pp-ink); }
 .pp-sec-s { font-size: .8rem; color: var(--pp-muted); }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > div > .stElementContainer) { background: #fff; }
 
-/* tabs */
-div[data-baseweb="tab-list"] { gap: 4px; border-bottom: 1px solid var(--pp-line); }
-button[data-baseweb="tab"] { padding: 8px 16px; border-radius: 10px 10px 0 0; }
-button[data-baseweb="tab"] p { font-size: .95rem; font-weight: 650; }
-button[data-baseweb="tab"][aria-selected="true"] { background: #e9f3f9; }
-button[data-baseweb="tab"][aria-selected="true"] p { color: var(--pp-brand); }
-div[data-baseweb="tab-highlight"] { background-color: var(--pp-brand); height: 3px; }
-
-/* alert queue: radio options rendered as cards (stRadioOption = newer Streamlit, baseweb = Streamlit in Snowflake) */
+/* alert queue cards */
 .st-key-alert_pick, .st-key-alert_pick [data-testid="stRadio"], .st-key-alert_pick [data-testid="stRadioGroup"] { width: 100%; }
 .st-key-alert_pick div[role="radiogroup"] { gap: 8px; width: 100%; display: flex; flex-direction: column; align-items: stretch; }
 .st-key-alert_pick label[data-testid="stRadioOption"], .st-key-alert_pick label[data-baseweb="radio"] { width: 100%;
@@ -592,7 +609,7 @@ div[data-baseweb="tab-highlight"] { background-color: var(--pp-brand); height: 3
 .st-key-alert_pick label[data-baseweb="radio"] > div:first-child { display: none; }
 .st-key-alert_pick label p { font-size: .9rem; line-height: 1.5; }
 
-/* evidence: thresholds and stat tiles */
+/* evidence */
 .pp-asset-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .pp-asset-k { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--pp-muted); }
 .pp-asset-t { font-size: 1.3rem; font-weight: 780; color: var(--pp-ink); margin: 2px 0; }
@@ -612,7 +629,7 @@ div[data-baseweb="tab-highlight"] { background-color: var(--pp-brand); height: 3
 .pp-stat-v { font-size: 1.25rem; font-weight: 760; color: var(--pp-ink); margin-top: 2px; }
 
 /* floor map */
-.pp-floor { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 14px; }
+.pp-floor { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1100px) { .pp-floor { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pp-lane { background: var(--pp-soft); border: 1px solid var(--pp-line); border-radius: 14px; padding: 12px; }
 .pp-lane-h { font-weight: 750; color: var(--pp-ink); font-size: .95rem; }
@@ -624,34 +641,40 @@ div[data-baseweb="tab-highlight"] { background-color: var(--pp-brand); height: 3
 .pp-tile.info { background: var(--pp-info-t); border-color: rgba(107,119,133,.4); }
 .pp-tile-top { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
 .pp-tile-id { font-weight: 750; font-size: .82rem; color: var(--pp-ink); white-space: nowrap; }
-.pp-tile-foot { margin-top: 6px; }
-.pp-tile-type { font-size: .74rem; color: var(--pp-ink2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pp-tile-risk { font-size: 1.15rem; font-weight: 780; color: var(--pp-ink); line-height: 1.1; white-space: nowrap; }
-.pp-tile-risk span { font-size: .72rem; color: var(--pp-muted); font-weight: 600; }
+.pp-tile-type { font-size: .74rem; color: var(--pp-ink2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-tile-foot { margin-top: 6px; }
 .pp-tile-mode { margin-top: 4px; font-size: .72rem; color: var(--pp-ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* line OEE tiles */
-.pp-lines { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 14px; margin-bottom: 10px; }
+/* line OEE cards */
+.pp-lines { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
 .pp-line-v { font-size: 1.7rem; font-weight: 780; color: var(--pp-ink); }
 .pp-apq { display: flex; gap: 12px; font-size: .78rem; color: var(--pp-ink2); margin-top: 4px; }
 .pp-apq b { color: var(--pp-ink); }
 
-/* copilot sources and work-order tickets */
-.pp-q { background: #e9f3f9; border-radius: 14px 14px 4px 14px; padding: 10px 14px; margin: 4px 0 10px auto; max-width: 85%;
-  color: var(--pp-ink); font-weight: 600; width: fit-content; }
+/* copilot */
+.pp-q { background: var(--pp-brand); color: #fff; border-radius: 16px 16px 4px 16px; padding: 10px 14px; margin: 6px 0 8px auto;
+  max-width: 80%; width: fit-content; font-weight: 600; box-shadow: 0 4px 12px rgba(17,86,127,.2); }
 .pp-src { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--pp-line); font-size: .86rem; }
 .pp-src:last-child { border-bottom: none; }
+.pp-sql { background: #0f1b2b; color: #cfe3ee; border-radius: 10px; padding: 10px 12px; font-family: Consolas, monospace;
+  font-size: .78rem; white-space: pre-wrap; word-break: break-word; }
+
+/* tickets */
 .pp-ticket { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 12px 16px; margin-bottom: 6px;
   display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(11,31,58,.05); }
 .pp-ticket-id { font-weight: 800; color: var(--pp-brand); font-size: 1rem; }
 .pp-ticket-s { font-size: .84rem; color: var(--pp-ink2); margin-top: 3px; }
-.pp-side-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.pp-side-logo { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #0B1F3A, #1b7fae);
-  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; }
-.pp-side-t { font-weight: 800; color: var(--pp-ink); font-size: 1.1rem; line-height: 1.1; }
-.pp-side-s { font-size: .74rem; color: var(--pp-muted); }
-.pp-fresh { background: #fff; border: 1px solid var(--pp-line); border-radius: 12px; padding: 10px 12px; font-size: .8rem; color: var(--pp-ink2); }
-.pp-fresh b { color: var(--pp-ink); font-size: .95rem; }
+
+/* how it works */
+.pp-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1200px) { .pp-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.pp-step { background: #fff; border: 1px solid var(--pp-line); border-radius: 14px; padding: 14px; }
+.pp-step-n { width: 28px; height: 28px; border-radius: 50%; background: var(--pp-brand); color: #fff; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; font-size: .85rem; }
+.pp-step-t { font-weight: 750; margin: 8px 0 4px; color: var(--pp-ink); }
+.pp-step-s { font-size: .8rem; color: var(--pp-ink2); line-height: 1.45; }
+.pp-step-x { font-size: .72rem; color: var(--pp-brand); font-weight: 700; margin-top: 8px; font-family: Consolas, monospace; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -680,6 +703,10 @@ def section(title, sub=""):
     html(f'<div class="pp-sec"><span class="pp-sec-t">{title}</span><span class="pp-sec-s">{sub}</span></div>')
 
 
+def page_header(title, sub):
+    html(f'<div class="pp-ph"><div><div class="pp-ph-t">{title}</div><div class="pp-ph-s">{sub}</div></div></div>')
+
+
 def style_fig(fig, height=300, **kw):
     fig.update_layout(height=height, margin=dict(l=6, r=10, t=10, b=6), paper_bgcolor="rgba(0,0,0,0)",
                       plot_bgcolor="rgba(0,0,0,0)", font=dict(family=FONT, size=12, color=INK2),
@@ -691,10 +718,15 @@ def style_fig(fig, height=300, **kw):
     return fig
 
 
-def line_color(line_id):
-    """Colour follows the entity (fixed order of all lines), never its rank in a filtered view."""
-    order = sorted(lines.LINE_ID.tolist())
-    return SERIES[order.index(line_id) % len(SERIES)] if line_id in order else SERIES[0]
+def goto(page, asset=None, alert=None):
+    """Navigation callback: switch page and optionally focus an asset / alert."""
+    st.session_state["nav"] = page
+    if asset:
+        st.session_state["focus_asset"] = asset
+        for k in ("a360_pick", "cop_asset"):
+            st.session_state.pop(k, None)
+    if alert:
+        st.session_state["alert_pick"] = alert
 
 
 # ----------------------------------------------------------------------------- load data
@@ -711,144 +743,128 @@ alerts = alerts.merge(risk[asset_cols], on="ASSET_ID", how="left")
 as_of = pd.to_datetime(risk.AS_OF_TS).max()
 scored_at = pd.to_datetime(risk.SCORED_AT).max()
 line_name = lines.set_index("LINE_ID").LINE_NAME.to_dict()
+ALL_LINES = sorted(lines.LINE_ID.tolist())
 
 
 def short_line(lid):
     return line_name.get(lid, lid).split(" - ")[-1]
 
 
-# ----------------------------------------------------------------------------- sidebar
-with st.sidebar:
-    html('<div class="pp-side-brand"><div class="pp-side-logo">⚙</div><div><div class="pp-side-t">PlantPulse</div>'
-         '<div class="pp-side-s">Predictive maintenance on Snowflake</div></div></div>')
+def line_color(line_id):
+    """Colour follows the entity (fixed order of all lines), never its rank in a filtered view."""
+    return SERIES[ALL_LINES.index(line_id) % len(SERIES)] if line_id in ALL_LINES else SERIES[0]
+
+
+# ----------------------------------------------------------------------------- app bar + navigation + filters
+open_all = alerts[alerts.STATUS.isin(OPEN_ALERT)]
+sev_counts = open_all.SEVERITY.value_counts()
+pills = "".join(f'<span class="pp-pill"><b>{int(sev_counts.get(s, 0))}</b> {SEV_STYLE[s][1]} {s.lower()}</span>'
+                for s in ["CRITICAL", "WARNING", "INFO"])
+badge = ('<span class="pp-badge live">● LIVE · SNOWFLAKE</span>' if LIVE
+         else '<span class="pp-badge demo">● DEMO · SYNTHETIC DATA</span>')
+html(f"""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">⚙</div><div>
+<div class="pp-brand-t">PlantPulse</div><div class="pp-brand-s">Predictive maintenance &amp; OEE command center · Pune &amp; Chennai</div>
+</div></div><div class="pp-appbar-r"><div class="pp-fresh">Telemetry as of <b>{as_of:%d %b %Y, %H:%M}</b><br>
+scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot"}</div>{pills}{badge}</div></div>""")
+
+if st.session_state.get("nav") not in PAGES:
+    st.session_state["nav"] = PAGES[0]
+n1, n2, n3, n4 = st.columns([7.2, 1.5, 1.5, 1.3], gap="small", vertical_alignment="center") if ST_VER >= (1, 36) \
+    else st.columns([7.2, 1.5, 1.5, 1.3], gap="small")
+with n1:
+    page = st.radio("Navigation", PAGES, key="nav", horizontal=True, label_visibility="collapsed")
+with n2:
     plants = ["All plants"] + sorted(lines.PLANT_NAME.unique().tolist())
-    plant = st.selectbox("Plant", plants)
+    plant = st.selectbox("Plant", plants, label_visibility="collapsed")
+with n3:
     line_opts = lines if plant == "All plants" else lines[lines.PLANT_NAME == plant]
-    line = st.selectbox("Line", ["All lines"] + line_opts.LINE_ID.tolist(),
+    line = st.selectbox("Line", ["All lines"] + line_opts.LINE_ID.tolist(), label_visibility="collapsed",
                         format_func=lambda x: x if x == "All lines" else f"{x} · {short_line(x)}")
-    sel_lines = line_opts.LINE_ID.tolist() if line == "All lines" else [line]
-
-    st.markdown("")
-    html(f'<div class="pp-fresh">Telemetry as of<br><b>{as_of:%d %b %Y · %H:%M}</b><br>'
-         f'<span style="color:#898781">Last scored {scored_at:%d %b %H:%M}'
-         f'{" (Snowflake account time)" if LIVE else " · demo snapshot"}</span></div>')
-    st.markdown("")
-    if st.button("▶  Simulate next hour of sensor data", **stretch("button")):
-        if LIVE:
-            with st.spinner("Streaming 6 × 10-min readings, rescoring and raising alerts..."):
-                try:
-                    st.session_state["flash"] = ("success", repo.simulate())
-                except Exception as e:
-                    st.session_state["flash"] = ("error", f"Simulation failed: {e}")
-            rerun()
-        else:
-            st.info("The sensor stream simulation runs in Snowflake (live mode only).")
-    if LIVE and st.button("↻  Refresh data", **stretch("button")):
-        st.cache_data.clear()
+with n4:
+    sim = st.button("▶ Next hour", help="Simulate the next hour of sensor data, rescore every asset and raise alerts "
+                                        "(runs in Snowflake; live mode only)", **stretch("button"))
+sel_lines = line_opts.LINE_ID.tolist() if line == "All lines" else [line]
+if sim:
+    if LIVE:
+        with st.spinner("Streaming 6 × 10-min readings, rescoring and raising alerts..."):
+            try:
+                st.session_state["flash"] = ("success", repo.simulate())
+            except Exception as e:
+                st.session_state["flash"] = ("error", f"Simulation failed: {e}")
         rerun()
+    else:
+        st.session_state["flash"] = ("info", "The live sensor stream runs inside Snowflake; the public demo uses a "
+                                             "fixed synthetic snapshot.")
+if "flash" in st.session_state:
+    kind, msg = st.session_state.pop("flash")
+    getattr(st, kind)(msg)
 
-    st.divider()
-    st.caption("**About.** PlantPulse joins OT telemetry with ERP/CMMS history on Snowflake to predict failures "
-               "1–3 days ahead, explain them with evidence and manuals, raise predictive work orders with parts "
-               "checks, and tie maintenance to OEE.")
-    if not LIVE:
-        st.caption("Demo mode runs in your browser on the bundled synthetic data, with the rule-based score only "
-                   "(no ML model). Triage and work-order actions last for this session.")
-
+scope = ("both plants" if plant == "All plants" else plant) + ("" if line == "All lines" else f" · {line}")
 f_risk = risk[risk.LINE_ID.isin(sel_lines)]
 f_alerts = alerts[alerts.LINE_ID.isin(sel_lines)]
+open_alerts = f_alerts[f_alerts.STATUS.isin(OPEN_ALERT)]
 
-# ----------------------------------------------------------------------------- data for header
-oee = repo.oee_daily().copy()
-oee["PROD_DATE"] = pd.to_datetime(oee.PROD_DATE)
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _oee_daily():
+    o = repo.oee_daily().copy()
+    o["PROD_DATE"] = pd.to_datetime(o.PROD_DATE)
+    return o
+
+
+oee = _oee_daily()
 f_oee = oee[oee.LINE_ID.isin(sel_lines)]
 last_day = f_oee.PROD_DATE.max()
 oee_7 = f_oee[f_oee.PROD_DATE > last_day - pd.Timedelta(days=7)].OEE.mean()
 oee_prev = f_oee[(f_oee.PROD_DATE <= last_day - pd.Timedelta(days=7))
                  & (f_oee.PROD_DATE > last_day - pd.Timedelta(days=14))].OEE.mean()
-
 wos = repo.work_orders().copy()
 wos = wos.merge(risk[["ASSET_ID", "LINE_ID", "ASSET_NAME"]], on="ASSET_ID", how="left")
 f_wos = wos[wos.LINE_ID.isin(sel_lines)]
 open_pdm = f_wos[(f_wos.WO_TYPE == "PDM") & ~f_wos.STATUS.isin(["CLOSED", "CANCELLED"])]
-
 failures = repo.failures()
 mode_dt = failures.groupby("FAILURE_MODE").DOWNTIME_HOURS.mean()
 at_risk = f_risk[f_risk.RISK_BAND.isin(["HIGH", "MEDIUM"]) & ~f_risk.SUSPECTED_MODE.isin(["NONE", "SENSOR_FAULT"])]
 avoidable = float(sum(mode_dt.get(m, failures.DOWNTIME_HOURS.mean()) for m in at_risk.SUSPECTED_MODE))
-open_alerts = f_alerts[f_alerts.STATUS.isin(OPEN_ALERT)]
-
-# ----------------------------------------------------------------------------- hero + KPIs
-scope = "Pune Assembly & Chennai Machining" if plant == "All plants" else plant
-scope += " · all lines" if line == "All lines" else f" · {line} {short_line(line)}"
-badge = ('<span class="pp-badge live">● LIVE · SNOWFLAKE</span>' if LIVE
-         else '<span class="pp-badge demo">● DEMO MODE · SYNTHETIC DATA</span>')
-sev_counts = open_alerts.SEVERITY.value_counts()
-pills = "".join(f'<span class="pp-pill"><b>{int(sev_counts.get(s, 0))}</b> {SEV_STYLE[s][1]} {s.lower()}</span>'
-                for s in ["CRITICAL", "WARNING", "INFO"])
-html(f"""<div class="pp-hero"><div>
-<div class="pp-eyebrow">Predictive maintenance &amp; OEE command center</div>
-<div class="pp-h1">PlantPulse</div>
-<div class="pp-hero-sub">{scope} · {len(f_risk)} rotating assets · telemetry as of {as_of:%d %b %Y, %H:%M}</div>
-</div><div class="pp-hero-r">{badge}<div class="pp-pills">{pills}</div></div></div>""")
+rk_all = risk.set_index("ASSET_ID")
 
 
+# ----------------------------------------------------------------------------- shared pieces
 def kpi(icon, label, value, sub, tip=""):
     return (f'<div class="pp-kpi" title="{tip}"><div class="pp-kpi-top"><span class="pp-ic">{icon}</span>{label}</div>'
             f'<div class="pp-kpi-val">{value}</div><div class="pp-kpi-sub">{sub}</div></div>')
 
 
-gap = (oee_7 - OEE_TARGET) * 100 if pd.notna(oee_7) else np.nan
-gap_txt = ("–" if pd.isna(gap) else
-           f'<span class="{"pp-pos" if gap >= 0 else "pp-neg"}">{"▲" if gap >= 0 else "▼"} {abs(gap):.1f} pp</span> vs 80% target')
-n_high, n_med = int((f_risk.RISK_BAND == "HIGH").sum()), int((f_risk.RISK_BAND == "MEDIUM").sum())
-html('<div class="pp-kpis">' + "".join([
-    kpi("📈", "Fleet OEE · 7 days", fnum(oee_7 * 100, "{:.1f}%"), gap_txt,
-        f"Mean daily OEE over the 7 production days to {last_day:%Y-%m-%d}. Previous 7 days: {fnum(oee_prev * 100, '{:.1f}%')}."),
-    kpi("🛡", "Assets at risk", f"{n_high + n_med}",
-        f'<span class="pp-neg">{n_high} high</span> · {n_med} medium of {len(f_risk)}',
-        "Risk bands: HIGH >= 50, MEDIUM >= 30." + ("" if LIVE else " Demo mode uses the rule score only.")),
-    kpi("🔔", "Open alerts", f"{len(open_alerts)}",
-        f'{int((f_alerts.STATUS == "DISMISSED").sum())} dismissed · {int((f_alerts.STATUS == "WO_CREATED").sum())} actioned',
-        "Alerts with status NEW or ACKNOWLEDGED."),
-    kpi("🛠", "Open predictive WOs", f"{len(open_pdm)}",
-        f'{int((open_pdm.PRIORITY == "P2").sum())} urgent (P2)' if len(open_pdm) else "raise one from Alert Triage"),
-    kpi("⏱", "Avoidable downtime", f"~{avoidable:.0f} h", f"if the {len(at_risk)} predicted failures are prevented",
-        "For every HIGH/MEDIUM asset with a predicted failure mode, the average downtime of past breakdowns with the same "
-        "failure mode (ERP failure history), summed."),
-]) + "</div>")
-
-if "flash" in st.session_state:
-    kind, msg = st.session_state.pop("flash")
-    getattr(st, kind)(msg)
-
-top = open_alerts[open_alerts.SEVERITY != "INFO"].sort_values("RISK_SCORE", ascending=False)
-if len(top):
-    t = top.iloc[0]
-    act = ("create a P2 predictive work order within 24 h" if t.SEVERITY == "CRITICAL"
-           else "investigate the root cause and plan the job")
-    html(f"""<div class="pp-nba critical"><span class="pp-ic">🎯</span><div>
-<div class="pp-nba-k">Next best action</div>
-<div class="pp-nba-t">{t.ALERT_ID} · {t.ASSET_NAME} ({t.ASSET_ID}): {pretty(t.SUSPECTED_MODE).lower()} predicted,
-alarm limit in {fmt_hours(t.HOURS_TO_ALARM)}</div>
-<div class="pp-nba-s">Recommended: {act}. Open it in <b>Alert Triage</b>.</div></div></div>""")
-else:
-    html('<div class="pp-nba good"><span class="pp-ic">✅</span><div><div class="pp-nba-k">Next best action</div>'
-         '<div class="pp-nba-t">No open predictive alerts for this selection</div>'
-         '<div class="pp-nba-s">Every alert has been actioned or dismissed.</div></div></div>')
-
-tabs = st.tabs(["🚨  Alert Triage", "🧠  Root-Cause Copilot", "🏭  Asset Health", "📈  OEE", "🛠  Work Orders"])
+def kpi_row():
+    gap = (oee_7 - OEE_TARGET) * 100 if pd.notna(oee_7) else np.nan
+    gap_txt = ("–" if pd.isna(gap) else
+               f'<span class="{"pp-pos" if gap >= 0 else "pp-neg"}">{"▲" if gap >= 0 else "▼"} {abs(gap):.1f} pp</span> vs 80% target')
+    n_high, n_med = int((f_risk.RISK_BAND == "HIGH").sum()), int((f_risk.RISK_BAND == "MEDIUM").sum())
+    html('<div class="pp-kpis">' + "".join([
+        kpi("📈", "Fleet OEE · 7 days", fnum(oee_7 * 100, "{:.1f}%"), gap_txt,
+            f"Mean daily OEE over the 7 production days to {last_day:%Y-%m-%d}. Previous 7 days: {fnum(oee_prev * 100, '{:.1f}%')}."),
+        kpi("🛡", "Assets at risk", f"{n_high + n_med}", f'<span class="pp-neg">{n_high} high</span> · {n_med} medium of {len(f_risk)}',
+            "Risk bands: HIGH >= 50, MEDIUM >= 30." + ("" if LIVE else " Demo mode uses the rule score only.")),
+        kpi("🔔", "Open alerts", f"{len(open_alerts)}",
+            f'{int((f_alerts.STATUS == "DISMISSED").sum())} dismissed · {int((f_alerts.STATUS == "WO_CREATED").sum())} actioned',
+            "Alerts with status NEW or ACKNOWLEDGED."),
+        kpi("🛠", "Open predictive WOs", f"{len(open_pdm)}",
+            f'{int((open_pdm.PRIORITY == "P2").sum())} urgent (P2)' if len(open_pdm) else "raise one from Alerts"),
+        kpi("⏱", "Avoidable downtime", f"~{avoidable:.0f} h", f"if the {len(at_risk)} predicted failures are prevented",
+            "For every HIGH/MEDIUM asset with a predicted failure mode, the average downtime of past breakdowns with the "
+            "same failure mode (ERP failure history), summed."),
+    ]) + "</div>")
 
 
-# ----------------------------------------------------------------------------- shared pieces
-def trend_chart(asset_id, col, base, alarm, unit, days=7, color=SERIES[0]):
+def trend_chart(asset_id, col, base, alarm, unit, days=7, color=SERIES[0], height=240):
     h = repo.hourly(asset_id, days)
     fig = go.Figure()
     if len(h):
         fig.add_trace(go.Scatter(x=h.HOUR_TS, y=h[col], mode="lines", line=dict(color=color, width=2),
                                  hovertemplate="%{x|%d %b %H:%M}<br><b>%{y:.2f} " + unit + "</b><extra></extra>"))
-    lo = np.nanmin([h[col].min() if len(h) else np.nan, base if base else np.nan])
-    hi = np.nanmax([h[col].max() if len(h) else np.nan, alarm if alarm else np.nan])
+    vals = h[col].dropna() if len(h) else pd.Series(dtype=float)
+    lo = np.nanmin([vals.min() if len(vals) else np.nan, base if base else np.nan])
+    hi = np.nanmax([vals.max() if len(vals) else np.nan, alarm if alarm else np.nan])
     if alarm is not None and not pd.isna(alarm):
         fig.add_hrect(y0=alarm, y1=hi + (hi - lo) * 0.2 + 0.2, fillcolor=STATUS["critical"], opacity=0.06, line_width=0)
         fig.add_hline(y=alarm, line=dict(color=STATUS["critical"], dash="dash", width=1.5),
@@ -860,13 +876,15 @@ def trend_chart(asset_id, col, base, alarm, unit, days=7, color=SERIES[0]):
     if not (pd.isna(lo) or pd.isna(hi)):
         pad = (hi - lo) * 0.12 + 0.1
         fig.update_yaxes(range=[lo - pad, hi + pad])
-    st.plotly_chart(style_fig(fig, 250, showlegend=False, hovermode="x"), **stretch())
+    st.plotly_chart(style_fig(fig, height, showlegend=False, hovermode="x"), **stretch())
 
 
 def baseline_for(asset_id):
     b = repo.baselines()
     b = b[b.ASSET_ID == asset_id]
-    return (None, None) if b.empty else (float(b.BASE_VIB.iloc[0]), float(b.BASE_TEMP.iloc[0]))
+    if b.empty:
+        return None, None, None
+    return float(b.BASE_VIB.iloc[0]), float(b.BASE_TEMP.iloc[0]), float(b.BASE_CUR.iloc[0])
 
 
 def threshold_bar(label, unit, val, base, alarm, lo=0.0, digits=2):
@@ -881,13 +899,125 @@ def threshold_bar(label, unit, val, base, alarm, lo=0.0, digits=2):
             f'<div class="pp-track"><div class="pp-fill" style="width:{pct(val):.1f}%;background:{color}"></div>'
             f'<div class="pp-tick base" style="left:{pct(base):.1f}%"></div>'
             f'<div class="pp-tick alarm" style="left:{pct(alarm):.1f}%"></div></div>'
-            f'<div class="pp-bar-l"><span>baseline {base:.{digits}f}</span><span>{frac * 100:.0f}% of the way to alarm</span>'
+            f'<div class="pp-bar-l"><span>baseline {base:.{digits}f}</span><span>{max(frac, 0) * 100:.0f}% of the way to alarm</span>'
             f'<span style="color:#a32626">alarm {float(alarm):.1f}</span></div></div>')
 
 
 def stats(items):
     return '<div class="pp-stats">' + "".join(
         f'<div class="pp-stat"><div class="pp-stat-l">{l}</div><div class="pp-stat-v">{v}</div></div>' for l, v in items) + "</div>"
+
+
+def risk_gauge(score, height=210):
+    g = go.Figure(go.Indicator(
+        mode="gauge+number", value=float(score), number=dict(font=dict(size=40, color=INK, family=FONT)),
+        title=dict(text="Failure risk (0–100)", font=dict(size=13, color=INK2)),
+        gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 30, 50, 100], tickfont=dict(color=MUTED, size=10)),
+                   bar=dict(color=NAVY, thickness=0.28), bgcolor="#eef1f4", borderwidth=0,
+                   steps=[dict(range=[0, 30], color="#dff1df"), dict(range=[30, 50], color="#fdebc2"),
+                          dict(range=[50, 100], color="#f6cfcf")])))
+    st.plotly_chart(style_fig(g, height, margin=dict(l=24, r=24, t=40, b=0)), **stretch())
+
+
+def asset_card(asset_id, kicker=""):
+    a = rk_all.loc[asset_id]
+    html(f"""<div class="pp-card"><div class="pp-asset-h"><div>
+<div class="pp-asset-k">{kicker}</div>
+<div class="pp-asset-t">{TYPE_ICON.get(a.ASSET_TYPE, '⚙')} {a.ASSET_NAME}<span>{asset_id}</span></div>
+<div class="pp-asset-s">{a.ASSET_TYPE} · line {a.LINE_ID} ({short_line(a.LINE_ID)}) · {a.PLANT_NAME} · criticality {a.CRITICALITY}
+· telemetry {pd.to_datetime(a.AS_OF_TS):%d %b %H:%M}</div></div>
+<div>{band_chip(a.RISK_BAND, a.SUSPECTED_MODE)} {chip(pretty(a.SUSPECTED_MODE) if a.SUSPECTED_MODE != 'NONE' else 'Healthy', 'brand')}</div>
+</div></div>""")
+
+
+def evidence_block(asset_id):
+    r = rk_all.loc[asset_id]
+    bv, bt, _ = baseline_for(asset_id)
+    g1, g2 = st.columns([5, 7], gap="medium")
+    with g1:
+        risk_gauge(r.RISK_SCORE)
+    with g2:
+        html('<div style="height:8px"></div>'
+             + threshold_bar("Vibration · 24 h avg", "mm/s", r.VIB_AVG_24H, bv, r.VIBRATION_ALARM_MM_S)
+             + threshold_bar("Temperature · 24 h avg", "°C", r.TEMP_AVG_24H, bt, r.TEMP_ALARM_C, lo=20, digits=1))
+    html(stats([("Hours to alarm", fmt_hours(r.HOURS_TO_ALARM)),
+                ("ML P(fail ≤ 72 h)", fnum(r.ML_PROB, "{:.0%}", "n/a (demo)" if not LIVE else "–")),
+                ("Suspected mode", pretty(r.SUSPECTED_MODE)),
+                ("Vibration × baseline", f"{fnum(r.VIB_RATIO, '{:.2f}')}×  ·  {fnum(r.TEMP_DELTA, '{:+.1f}')} °C")]))
+    return bv, bt
+
+
+def floor_map(line_ids):
+    lanes = []
+    for lid in line_ids:
+        g = risk[risk.LINE_ID == lid].copy()
+        g["_o"] = g.ASSET_TYPE.map({t: i for i, t in enumerate(TYPE_ORDER)})
+        tiles = []
+        for a in g.sort_values("_o").itertuples():
+            kind = ("info" if a.SUSPECTED_MODE == "SENSOR_FAULT" and a.RISK_BAND == "LOW"
+                    else BAND_STYLE.get(a.RISK_BAND, ("good", ""))[0])
+            mode = "Healthy" if a.SUSPECTED_MODE == "NONE" else pretty(a.SUSPECTED_MODE)
+            eta = "" if a.SUSPECTED_MODE in ("NONE", "SENSOR_FAULT") else f" · {fmt_hours(a.HOURS_TO_ALARM)}"
+            tiles.append(f"""<div class="pp-tile {kind if kind != 'good' else ''}" title="{a.ASSET_ID}: {mode}">
+<div class="pp-tile-top"><span class="pp-tile-id">{TYPE_ICON.get(a.ASSET_TYPE, '⚙')} {a.ASSET_ID.split('-', 2)[-1]}</span>
+<span class="pp-tile-risk" title="risk score 0-100">{a.RISK_SCORE:.0f}</span></div>
+<div class="pp-tile-type">{a.ASSET_TYPE}</div>
+<div class="pp-tile-foot">{band_chip(a.RISK_BAND, a.SUSPECTED_MODE)}</div>
+<div class="pp-tile-mode">{mode}{eta}</div></div>""")
+        n_risk = int(g.RISK_BAND.isin(["HIGH", "MEDIUM"]).sum())
+        lanes.append(f"""<div class="pp-lane"><div class="pp-lane-h">{lid}</div>
+<div class="pp-lane-s">{short_line(lid)} · {n_risk} at risk</div><div class="pp-tiles">{''.join(tiles)}</div></div>""")
+    html(f'<div class="pp-floor" style="--cols:{min(len(lanes), 4)}">{"".join(lanes)}</div>')
+
+
+def line_cards():
+    per_line = f_oee.groupby("LINE_ID")[["AVAILABILITY", "PERFORMANCE", "QUALITY", "OEE"]].mean()
+    bd = f_oee.groupby("LINE_ID").BREAKDOWN_MIN.sum() / 60
+    cards = []
+    for lid, v in per_line.iterrows():
+        g = (v.OEE - OEE_TARGET) * 100
+        cards.append(f"""<div class="pp-kpi"><div class="pp-kpi-top">
+<span class="pp-ic" style="background:{line_color(lid)}22;color:{line_color(lid)}">■</span>{lid} · {short_line(lid)}</div>
+<div class="pp-line-v">{v.OEE * 100:.1f}%</div>
+<div class="pp-kpi-sub"><span class="{'pp-pos' if g >= 0 else 'pp-neg'}">{'▲' if g >= 0 else '▼'} {abs(g):.1f} pp</span> vs target
+· {bd.get(lid, 0):.0f} h breakdowns</div>
+<div class="pp-apq"><span>A <b>{v.AVAILABILITY:.1%}</b></span><span>P <b>{v.PERFORMANCE:.1%}</b></span>
+<span>Q <b>{v.QUALITY:.1%}</b></span></div></div>""")
+    html(f'<div class="pp-lines" style="--cols:{max(len(cards), 1)}">{"".join(cards)}</div>')
+    return per_line
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _backtest():
+    try:
+        return repo.backtest()
+    except Exception:
+        return pd.DataFrame()
+
+
+def backtest_chart(height=330):
+    bt = _backtest()
+    if bt.empty:
+        st.caption("Back-test unavailable.")
+        return
+    bt = bt.copy()
+    bt["LEAD_TIME_HOURS"] = pd.to_numeric(bt.LEAD_TIME_HOURS, errors="coerce")
+    bt["LABEL"] = bt.ASSET_ID.str.split("-", n=2).str[-1] + " · " + bt.FAILURE_MODE.map(pretty) + " · " + \
+        pd.to_datetime(bt.FAILURE_TS).dt.strftime("%d %b")
+    bt = bt.sort_values("FAILURE_TS")
+    fig = go.Figure(go.Bar(y=bt.LABEL, x=bt.LEAD_TIME_HOURS, orientation="h",
+                           marker=dict(color=SERIES[2], line=dict(color="#fff", width=2)),
+                           text=[f"{v:.0f} h" for v in bt.LEAD_TIME_HOURS], textposition="outside",
+                           textfont=dict(color=INK2, size=11),
+                           customdata=np.stack([bt.ASSET_ID, bt.DOWNTIME_HOURS], axis=-1),
+                           hovertemplate="%{customdata[0]}: warned <b>%{x:.0f} h</b> before failure"
+                                         " (downtime %{customdata[1]} h)<extra></extra>"))
+    fig.update_yaxes(autorange="reversed", showgrid=False, tickfont=dict(color=INK2, size=11))
+    fig.update_xaxes(showgrid=True, gridcolor=GRID, range=[0, bt.LEAD_TIME_HOURS.max() * 1.18], title="hours of warning")
+    st.plotly_chart(style_fig(fig, height, showlegend=False), **stretch())
+    lead = bt.LEAD_TIME_HOURS
+    st.caption(f"{lead.notna().sum()} of {len(bt)} historical failures flagged in advance (rule score ≥ 30); median "
+               f"lead {lead.median():.0f} h; failure mode correct in {bt.MODE_CORRECT.astype(bool).mean():.0%} of cases.")
 
 
 def render_wo_result(res):
@@ -923,8 +1053,6 @@ def render_wo_result(res):
     if res.get("diagnosis"):
         with st.expander("Diagnosis used for the job plan"):
             st.markdown(compact_md(res["diagnosis"]))
-            for s in res.get("sources") or []:
-                st.caption(f"[{s.get('doc_id')}] {s.get('title')} · {s.get('type')}")
 
 
 def source_rows(sources):
@@ -937,346 +1065,381 @@ def source_rows(sources):
     return "".join(out)
 
 
-# ----------------------------------------------------------------------------- tab 1: triage
-with tabs[0]:
+def asset_picker(key, options):
+    cur = st.session_state.get("focus_asset")
+    idx = options.index(cur) if cur in options else 0
+    v = st.selectbox("Asset", options, index=idx, key=key, label_visibility="collapsed",
+                     format_func=lambda a: f"{TYPE_ICON.get(rk_all.ASSET_TYPE[a], '⚙')} {a} · {rk_all.ASSET_NAME[a]}"
+                                           f" · risk {rk_all.RISK_SCORE[a]:.0f}")
+    st.session_state["focus_asset"] = v
+    return v
+
+
+# ----------------------------------------------------------------------------- page: control room
+def page_control_room():
+    page_header("Control room", f"Live condition of {len(f_risk)} rotating assets across {scope}, joined with ERP, "
+                                "CMMS and MES context in Snowflake")
+    kpi_row()
+    top = open_alerts[open_alerts.SEVERITY != "INFO"].sort_values("RISK_SCORE", ascending=False)
+    a1, a2 = st.columns([8.6, 1.4], gap="small")
+    with a1:
+        if len(top):
+            t = top.iloc[0]
+            act = ("create a P2 predictive work order within 24 h" if t.SEVERITY == "CRITICAL"
+                   else "investigate the root cause and plan the job")
+            html(f"""<div class="pp-nba"><span class="pp-ic">🎯</span><div><div class="pp-nba-k">Next best action</div>
+<div class="pp-nba-t">{t.ALERT_ID} · {t.ASSET_NAME} ({t.ASSET_ID}): {pretty(t.SUSPECTED_MODE).lower()} predicted,
+alarm limit in {fmt_hours(t.HOURS_TO_ALARM)}</div><div class="pp-nba-s">Recommended: {act}.</div></div></div>""")
+        else:
+            html('<div class="pp-nba good"><span class="pp-ic">✅</span><div><div class="pp-nba-k">Next best action</div>'
+                 '<div class="pp-nba-t">No open predictive alerts for this selection</div>'
+                 '<div class="pp-nba-s">Every alert has been actioned or dismissed.</div></div></div>')
+    with a2:
+        if len(top):
+            t = top.iloc[0]
+            st.button("Open alert →", type="primary", on_click=goto, args=(PAGES[1], t.ASSET_ID, t.ALERT_ID),
+                      key="nba_open", **stretch("button"))
+            st.button("Ask copilot", on_click=goto, args=(PAGES[3], t.ASSET_ID), key="nba_ask", **stretch("button"))
+
+    section("Live risk board", "every rotating asset by line · colour = risk band, always with icon and label")
+    floor_map(sel_lines)
+    st.markdown("")
+    c1, c2 = st.columns([5, 7], gap="large")
+    with c1:
+        section("Top alerts", f"{len(open_alerts)} open · ranked by risk")
+        q = open_alerts.sort_values("RISK_SCORE", ascending=False).head(4)
+        if q.empty:
+            st.caption("No open alerts.")
+        for a in q.itertuples():
+            with st.container(border=True):
+                x1, x2 = st.columns([4, 1.3], vertical_alignment="center") if ST_VER >= (1, 36) else st.columns([4, 1.3])
+                with x1:
+                    html(f"{sev_chip(a.SEVERITY)} &nbsp;<b>{a.ALERT_ID}</b> · {a.ASSET_ID}<br>"
+                         f'<span style="font-size:.84rem;color:#52514e">{pretty(a.SUSPECTED_MODE)} · risk <b>{a.RISK_SCORE:.0f}</b>'
+                         f" · alarm {fmt_hours(a.HOURS_TO_ALARM)}</span>")
+                with x2:
+                    st.button("Open", key=f"cr_{a.ALERT_ID}", on_click=goto, args=(PAGES[1], a.ASSET_ID, a.ALERT_ID),
+                              **stretch("button"))
+    with c2:
+        section("Proven on history", "hours of warning PlantPulse would have given before each past failure")
+        backtest_chart(360)
+
+
+# ----------------------------------------------------------------------------- page: alerts
+def page_alerts():
+    page_header("Alert triage", "Rank, investigate and act: acknowledge, dismiss a false alarm, or raise a predictive "
+                                "work order with parts and a job plan")
     if f_alerts.empty:
         st.info("No alerts for the selected plant / line.")
-    else:
-        q = f_alerts.sort_values(["RISK_SCORE", "ALERT_ID"], ascending=[False, True])
-        lab = q.set_index("ALERT_ID")
-        left, right = st.columns([4, 8], gap="large")
-        with left:
-            section("Alert queue", f"{len(open_alerts)} open · ranked by risk")
-            colour = {"CRITICAL": "red", "WARNING": "orange", "INFO": "gray"}
+        return
+    q = f_alerts.sort_values(["RISK_SCORE", "ALERT_ID"], ascending=[False, True])
+    lab = q.set_index("ALERT_ID")
+    if st.session_state.get("alert_pick") not in lab.index:
+        st.session_state.pop("alert_pick", None)
+    left, right = st.columns([4, 8], gap="large")
+    with left:
+        section("Alert queue", f"{len(open_alerts)} open · ranked by risk")
+        colour = {"CRITICAL": "red", "WARNING": "orange", "INFO": "gray"}
 
-            def _label(i):
-                a = lab.loc[i]
-                sev = "gray" if a.STATUS in ("DISMISSED", "WO_CREATED") else colour.get(a.SEVERITY, "gray")
-                status = {"NEW": "new", "ACKNOWLEDGED": "acknowledged", "DISMISSED": "dismissed",
-                          "WO_CREATED": f"{a.WO_ID} raised"}.get(a.STATUS, a.STATUS)
-                return (f":{sev}[**{SEV_STYLE.get(a.SEVERITY, ('', 'ℹ'))[1]} {a.SEVERITY}**] · **{i}** · {a.ASSET_ID}  \n"
-                        f"{pretty(a.SUSPECTED_MODE)} · risk **{a.RISK_SCORE:.0f}** · alarm {fmt_hours(a.HOURS_TO_ALARM)}"
-                        f" · _{status}_")
+        def _label(i):
+            a = lab.loc[i]
+            sev = "gray" if a.STATUS in ("DISMISSED", "WO_CREATED") else colour.get(a.SEVERITY, "gray")
+            status = {"NEW": "new", "ACKNOWLEDGED": "acknowledged", "DISMISSED": "dismissed",
+                      "WO_CREATED": f"{a.WO_ID} raised"}.get(a.STATUS, a.STATUS)
+            return (f":{sev}[**{SEV_STYLE.get(a.SEVERITY, ('', 'ℹ'))[1]} {a.SEVERITY}**] · **{i}** · {a.ASSET_ID}  \n"
+                    f"{pretty(a.SUSPECTED_MODE)} · risk **{a.RISK_SCORE:.0f}** · alarm {fmt_hours(a.HOURS_TO_ALARM)}"
+                    f" · _{status}_")
 
-            alert_id = st.radio("Alert queue", q.ALERT_ID.tolist(), key="alert_pick", format_func=_label,
-                                label_visibility="collapsed")
-        al = lab.loc[alert_id]
-        r = risk.set_index("ASSET_ID").loc[al.ASSET_ID]
-        base_vib, base_temp = baseline_for(al.ASSET_ID)
-        with right:
-            wo_txt = f" · {al.WO_ID}" if isinstance(al.WO_ID, str) and al.WO_ID else ""
-            html(f"""<div class="pp-card"><div class="pp-asset-h"><div>
-<div class="pp-asset-k">{alert_id} · {al.STATUS.replace('_', ' ').lower()}{wo_txt}</div>
-<div class="pp-asset-t">{TYPE_ICON.get(al.ASSET_TYPE, '⚙')} {al.ASSET_NAME}<span>{al.ASSET_ID}</span></div>
-<div class="pp-asset-s">{al.ASSET_TYPE} · line {al.LINE_ID} ({short_line(al.LINE_ID)}) · criticality {al.CRITICALITY}
-· telemetry {pd.to_datetime(al.AS_OF_TS):%d %b %H:%M}</div></div>
-<div>{sev_chip(al.SEVERITY)} {band_chip(r.RISK_BAND, r.SUSPECTED_MODE)}</div></div></div>""")
-            g1, g2 = st.columns([5, 7], gap="medium")
-            with g1:
-                gauge = go.Figure(go.Indicator(
-                    mode="gauge+number", value=float(r.RISK_SCORE),
-                    number=dict(suffix="", font=dict(size=40, color=INK, family=FONT)),
-                    title=dict(text="Failure risk (0–100)", font=dict(size=13, color=INK2)),
-                    gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 30, 50, 100], tickfont=dict(color=MUTED, size=10)),
-                               bar=dict(color=NAVY, thickness=0.28), bgcolor="#eef1f4", borderwidth=0,
-                               steps=[dict(range=[0, 30], color="#dff1df"), dict(range=[30, 50], color="#fdebc2"),
-                                      dict(range=[50, 100], color="#f6cfcf")])))
-                st.plotly_chart(style_fig(gauge, 210, margin=dict(l=24, r=24, t=40, b=0)), **stretch())
-            with g2:
-                html('<div style="height:8px"></div>'
-                     + threshold_bar("Vibration · 24 h avg", "mm/s", r.VIB_AVG_24H, base_vib, r.VIBRATION_ALARM_MM_S)
-                     + threshold_bar("Temperature · 24 h avg", "°C", r.TEMP_AVG_24H, base_temp, r.TEMP_ALARM_C, lo=20, digits=1))
-            html(stats([("Hours to alarm", fmt_hours(r.HOURS_TO_ALARM)),
-                        ("ML P(fail ≤ 72 h)", fnum(r.ML_PROB, "{:.0%}", "n/a (demo)" if not LIVE else "–")),
-                        ("Suspected mode", pretty(r.SUSPECTED_MODE)),
-                        ("Vibration × baseline", f"{fnum(r.VIB_RATIO, '{:.2f}')}×  ·  {fnum(r.TEMP_DELTA, '{:+.1f}')} °C")]))
-            t1, t2 = st.columns(2, gap="medium")
-            with t1:
-                section("Vibration · last 7 days", "mm/s, hourly")
-                trend_chart(al.ASSET_ID, "VIB_AVG", base_vib, r.VIBRATION_ALARM_MM_S, "mm/s", color=SERIES[0])
-            with t2:
-                section("Temperature · last 7 days", "°C, hourly")
-                trend_chart(al.ASSET_ID, "TEMP_AVG", base_temp, r.TEMP_ALARM_C, "°C", color=SERIES[1])
+        alert_id = st.radio("Alert queue", q.ALERT_ID.tolist(), key="alert_pick", format_func=_label,
+                            label_visibility="collapsed")
+    al = lab.loc[alert_id]
+    with right:
+        wo_txt = f" · {al.WO_ID}" if isinstance(al.WO_ID, str) and al.WO_ID else ""
+        asset_card(al.ASSET_ID, f"{alert_id} · {sev_chip(al.SEVERITY)} · {al.STATUS.replace('_', ' ').lower()}{wo_txt}")
+        bv, bt = evidence_block(al.ASSET_ID)
+        r = rk_all.loc[al.ASSET_ID]
+        t1, t2 = st.columns(2, gap="medium")
+        with t1:
+            section("Vibration · last 7 days", "mm/s, hourly")
+            trend_chart(al.ASSET_ID, "VIB_AVG", bv, r.VIBRATION_ALARM_MM_S, "mm/s", color=SERIES[0])
+        with t2:
+            section("Temperature · last 7 days", "°C, hourly")
+            trend_chart(al.ASSET_ID, "TEMP_AVG", bt, r.TEMP_ALARM_C, "°C", color=SERIES[1])
 
-            section("Decision", "human in the loop: every action is logged against the alert")
-            with st.container(border=True):
-                note = st.text_input("Triage note", key=f"note_{alert_id}", placeholder="Optional note for the record",
-                                     label_visibility="collapsed")
-                b = st.columns(3)
-                status = al.STATUS
-                user = repo.user()
-                if b[0].button("✔  Acknowledge", key=f"ack_{alert_id}", disabled=status != "NEW", **stretch("button")):
-                    st.session_state["flash"] = ("success", repo.triage(alert_id, "ACK", note or "Acknowledged", user))
-                    rerun()
-                if b[1].button("✖  Dismiss as false alarm", key=f"dis_{alert_id}", disabled=status not in OPEN_ALERT,
-                               **stretch("button")):
-                    st.session_state["flash"] = ("info", repo.triage(alert_id, "DISMISS", note or "False alarm", user))
-                    rerun()
-                if b[2].button("🛠  Create work order", key=f"wo_{alert_id}", type="primary",
-                               disabled=status not in OPEN_ALERT, **stretch("button")):
-                    with st.spinner("Diagnosing, checking spares and drafting the job plan (about 30–40 s in live mode)..."):
-                        try:
-                            res = repo.create_wo(alert_id, user)
-                        except Exception as e:
-                            res = {"error": f"Work-order creation failed: {e}"}
-                    st.session_state.setdefault("wo_results", {})[alert_id] = res
-                    rerun()
-            res = st.session_state.get("wo_results", {}).get(alert_id)
-            if res:
-                render_wo_result(res)
-            elif status == "WO_CREATED":
-                w = wos[wos.WO_ID == al.WO_ID]
-                if len(w):
-                    w = w.iloc[0]
-                    html(f"""<div class="pp-ticket"><div><div class="pp-ticket-id">{w.WO_ID}
+        section("Decision", "human in the loop: every action is logged against the alert")
+        with st.container(border=True):
+            note = st.text_input("Triage note", key=f"note_{alert_id}", placeholder="Optional note for the record",
+                                 label_visibility="collapsed")
+            b = st.columns(4)
+            status = al.STATUS
+            user = repo.user()
+            if b[0].button("✔ Acknowledge", key=f"ack_{alert_id}", disabled=status != "NEW", **stretch("button")):
+                st.session_state["flash"] = ("success", repo.triage(alert_id, "ACK", note or "Acknowledged", user))
+                rerun()
+            if b[1].button("✖ Dismiss false alarm", key=f"dis_{alert_id}", disabled=status not in OPEN_ALERT,
+                           **stretch("button")):
+                st.session_state["flash"] = ("info", repo.triage(alert_id, "DISMISS", note or "False alarm", user))
+                rerun()
+            b[2].button("🧠 Ask copilot", key=f"ask_{alert_id}", on_click=goto, args=(PAGES[3], al.ASSET_ID),
+                        **stretch("button"))
+            if b[3].button("🛠 Create work order", key=f"wo_{alert_id}", type="primary",
+                           disabled=status not in OPEN_ALERT, **stretch("button")):
+                with st.spinner("Diagnosing, checking spares and drafting the job plan (about 30–40 s in live mode)..."):
+                    try:
+                        res = repo.create_wo(alert_id, user)
+                    except Exception as e:
+                        res = {"error": f"Work-order creation failed: {e}"}
+                st.session_state.setdefault("wo_results", {})[alert_id] = res
+                rerun()
+        res = st.session_state.get("wo_results", {}).get(alert_id)
+        if res:
+            render_wo_result(res)
+        elif status == "WO_CREATED":
+            w = wos[wos.WO_ID == al.WO_ID]
+            if len(w):
+                w = w.iloc[0]
+                html(f"""<div class="pp-ticket"><div><div class="pp-ticket-id">{w.WO_ID}
 {chip(w.PRIORITY, PRIO_STYLE.get(w.PRIORITY, 'info'))} {chip(w.STATUS, 'brand')}</div>
 <div class="pp-ticket-s">Scheduled by {pd.to_datetime(w.SCHEDULED_TS):%d %b %Y %H:%M} · parts {w.PARTS_USED or '–'}</div>
 </div></div>""")
-                    with st.expander("Job plan", expanded=True):
-                        st.markdown(compact_md(w.AI_JOB_PLAN or ""))
-            elif status == "DISMISSED":
-                st.caption(f"Dismissed by {al.TRIAGED_BY}: {al.TRIAGE_NOTE}")
-            with st.expander("Raw alert evidence (JSON)"):
-                st.json(as_json(al.EVIDENCE) or {})
+                with st.expander("Job plan", expanded=True):
+                    st.markdown(compact_md(w.AI_JOB_PLAN or ""))
+        elif status == "DISMISSED":
+            st.caption(f"Dismissed by {al.TRIAGED_BY}: {al.TRIAGE_NOTE}")
+        with st.expander("Raw alert evidence (JSON)"):
+            st.json(as_json(al.EVIDENCE) or {})
 
 
-# ----------------------------------------------------------------------------- tab 2: copilot
-with tabs[1]:
-    assets_sorted = f_risk.sort_values("RISK_SCORE", ascending=False)
-    if assets_sorted.empty:
+# ----------------------------------------------------------------------------- page: asset 360
+def page_asset_360():
+    page_header("Asset 360", "One asset, every signal: condition vs baseline, four sensor trends, maintenance history")
+    opts = f_risk.sort_values("RISK_SCORE", ascending=False).ASSET_ID.tolist()
+    if not opts:
         st.info("No assets for the selected filter.")
+        return
+    p1, p2, p3 = st.columns([4, 3, 2])
+    with p1:
+        asset = asset_picker("a360_pick", opts)
+    with p2:
+        days = st.select_slider("Window", options=[3, 7, 14, 30, 60], value=14, format_func=lambda d: f"{d} days",
+                                label_visibility="collapsed")
+    with p3:
+        st.button("🧠 Ask copilot about it", on_click=goto, args=(PAGES[3], asset), key="a360_ask", **stretch("button"))
+    a = rk_all.loc[asset]
+    asset_card(asset, f"{a.LINE_ID} · {a.PLANT_NAME}")
+    bv, bt = evidence_block(asset)
+    bc = baseline_for(asset)[2]
+    t1, t2 = st.columns(2, gap="medium")
+    with t1:
+        section(f"Vibration · last {days} days", "mm/s, hourly")
+        trend_chart(asset, "VIB_AVG", bv, a.VIBRATION_ALARM_MM_S, "mm/s", days, SERIES[0])
+    with t2:
+        section(f"Temperature · last {days} days", "°C, hourly")
+        trend_chart(asset, "TEMP_AVG", bt, a.TEMP_ALARM_C, "°C", days, SERIES[1])
+    t3, t4 = st.columns(2, gap="medium")
+    with t3:
+        section(f"Motor current · last {days} days", "A, hourly")
+        trend_chart(asset, "CUR_AVG", bc, None, "A", days, SERIES[2], height=200)
+    with t4:
+        section(f"Shaft speed · last {days} days", "rpm, hourly")
+        trend_chart(asset, "RPM_AVG", None, None, "rpm", days, SERIES[3], height=200)
+    hist = wos[wos.ASSET_ID == asset][["WO_ID", "WO_TYPE", "PRIORITY", "STATUS", "CREATED_TS", "FAILURE_MODE",
+                                       "DOWNTIME_HOURS", "TECHNICIAN_NOTES"]]
+    section(f"Maintenance history · {asset}", f"{len(hist)} work orders (PM preventive · CM breakdown · PDM predictive)")
+    st.dataframe(hist, hide_index=True, **stretch(), column_config={
+        "WO_ID": "Work order", "WO_TYPE": "Type", "PRIORITY": "Priority", "STATUS": "Status",
+        "CREATED_TS": st.column_config.DatetimeColumn("Created", format="DD MMM YYYY HH:mm"),
+        "FAILURE_MODE": "Failure mode", "DOWNTIME_HOURS": st.column_config.NumberColumn("Downtime h", format="%.1f"),
+        "TECHNICIAN_NOTES": st.column_config.TextColumn("Technician notes", width="large")})
+
+
+# ----------------------------------------------------------------------------- page: copilot
+def demo_ask_oee(question):
+    """Offline stand-in for ANALYTICS.ASK_OEE: a few governed metrics computed from the bundled data."""
+    q = question.lower()
+    w = repo.work_orders()
+    w = w.merge(risk[["ASSET_ID", "LINE_ID", "ASSET_TYPE", "PLANT_NAME"]], on="ASSET_ID", how="left")
+    if "mttr" in q or "repair" in q:
+        df = w[w.WO_TYPE == "CM"].groupby("LINE_ID").DOWNTIME_HOURS.mean().round(2).reset_index(name="MTTR_HOURS")
+        ans = f"Mean time to repair is highest on {df.sort_values('MTTR_HOURS').iloc[-1].LINE_ID}."
+    elif "compliance" in q or " pm" in f" {q}":
+        pm = w[w.WO_TYPE == "PM"]
+        df = (pm.assign(DONE=pm.STATUS == "CLOSED").groupby("LINE_ID").DONE.mean() * 100).round(1).reset_index(name="PM_COMPLIANCE_PCT")
+        ans = f"PM compliance is lowest on {df.sort_values('PM_COMPLIANCE_PCT').iloc[0].LINE_ID}."
+    elif "type" in q or "downtime" in q:
+        df = w[w.WO_TYPE == "CM"].groupby("ASSET_TYPE").DOWNTIME_HOURS.sum().sort_values(ascending=False).reset_index(name="BREAKDOWN_HOURS")
+        ans = f"{df.iloc[0].ASSET_TYPE} assets account for the most breakdown downtime ({df.iloc[0].BREAKDOWN_HOURS:.1f} h)."
     else:
-        rk = assets_sorted.set_index("ASSET_ID")
-        c1, c2 = st.columns([4, 8], gap="large")
-        with c1:
-            section("Ask about an asset")
-            asset = st.selectbox("Asset", rk.index.tolist(), key="rca_asset", label_visibility="collapsed",
-                                 format_func=lambda a: f"{a} · {rk.ASSET_NAME[a]} · risk {rk.RISK_SCORE[a]:.0f}")
-            ra = rk.loc[asset]
+        g = oee.groupby("LINE_ID")[["AVAILABILITY", "PERFORMANCE", "QUALITY", "OEE"]].mean()
+        df = (g * 100).round(1).add_suffix("_PCT").reset_index().sort_values("OEE_PCT")
+        ans = f"{df.iloc[0].LINE_ID} has the lowest OEE at {df.iloc[0].OEE_PCT:.1f}% against the 80% target."
+    return {"question": question, "sql": "-- demo mode: computed locally from the bundled CSVs\n-- live mode: "
+            "SELECT * FROM SEMANTIC_VIEW(PLANTPULSE.ANALYTICS.PLANT_OPS_SV ...)", "columns": df.columns.tolist(),
+            "rows": df.values.tolist(), "answer": ans, "engine": "demo"}
+
+
+def page_copilot():
+    page_header("Copilot", "Ask in plain English: root cause from manuals and technician notes, or plant analytics "
+                           "over the governed semantic view")
+    left, right = st.columns([4, 8], gap="large")
+    with left:
+        mode = st.radio("Mode", ["🔧 Root cause", "📊 Plant analytics"],
+                        key="cop_mode", horizontal=True, label_visibility="collapsed")
+        rca = mode.startswith("🔧")
+        asked, asset = None, None
+        if rca:
+            opts = f_risk.sort_values("RISK_SCORE", ascending=False).ASSET_ID.tolist() or risk.ASSET_ID.tolist()
+            asset = asset_picker("cop_asset", opts)
+            ra = rk_all.loc[asset]
             html(f"""<div class="pp-card"><div class="pp-asset-k">Current condition</div>
 <div style="margin:6px 0">{band_chip(ra.RISK_BAND, ra.SUSPECTED_MODE)} <b>{pretty(ra.SUSPECTED_MODE)}</b></div>
 <div class="pp-asset-s">risk {ra.RISK_SCORE:.0f}/100 · alarm in {fmt_hours(ra.HOURS_TO_ALARM)} · vibration
 {fnum(ra.VIB_RATIO, '{:.2f}')}× baseline · {fnum(ra.TEMP_DELTA, '{:+.1f}')} °C</div></div>""")
-            section("Suggested questions")
             suggestions = [
                 f"What is the most likely root cause of the {pretty(ra.SUSPECTED_MODE).lower()} signature and how confident are we?",
                 "How many hours can we keep running safely, and what happens if we wait until the next planned stop?",
-                "Has this happened before on this or similar assets, and what fixed it?",
-            ]
-            asked = None
-            for i, sq in enumerate(suggestions):
-                if st.button(sq, key=f"sq_{i}", **stretch("button")):
-                    asked = sq
-            with st.form("rca_form", clear_on_submit=False):
-                free = st.text_input("Your question", placeholder="e.g. Which spare parts should I reserve?")
-                if st.form_submit_button("Ask the copilot", type="primary") and free.strip():
-                    asked = free.strip()
-            st.caption("Live mode: Cortex Search over manuals, SOPs and technician notes + a Cortex LLM, grounded in "
-                       "this asset's telemetry and CMMS history." if LIVE else
-                       "Demo mode: template answer from a local keyword search over the same maintenance library.")
-        with c2:
-            if asked:
-                with st.spinner("Retrieving telemetry, maintenance history and manuals" + (" (about 20 s)..." if LIVE else "...")):
-                    try:
-                        st.session_state["rca"] = {"asset": asset, "q": asked, "res": repo.root_cause(asset, asked)}
-                    except Exception as e:
-                        st.session_state["rca"] = {"asset": asset, "q": asked, "res": {"error": str(e)}}
-            cur = st.session_state.get("rca")
-            if cur and cur["asset"] == asset:
-                res = cur["res"] if isinstance(cur["res"], dict) else {"answer": str(cur["res"])}
-                html(f'<div class="pp-q">🙋 {cur["q"]}</div>')
-                if res.get("error"):
-                    st.error(res["error"])
-                else:
-                    with st.container(border=True):
-                        html(f'<div class="pp-asset-k">🧠 Copilot answer · {asset}</div>')
-                        st.markdown(compact_md(res.get("answer", "")))
-                    srcs = res.get("sources") or []
-                    if srcs:
-                        section("Cited sources", f"{len(srcs)} retrieved")
-                        html(f'<div class="pp-card">{source_rows(srcs)}</div>')
-                    with st.expander("Evidence sent to the copilot"):
-                        st.json(res.get("evidence") or {})
-            else:
-                html("""<div class="pp-card" style="text-align:center;padding:48px 24px">
-<div style="font-size:2.2rem">🧠</div><div class="pp-sec-t">Root-cause copilot</div>
-<div class="pp-asset-s" style="margin-top:6px">Pick an asset and a suggested question, or ask your own.<br>
-Answers cite the manuals (DOC-…) and past work orders (WO-…) they rely on.</div></div>""")
-
-
-# ----------------------------------------------------------------------------- tab 3: asset health
-with tabs[2]:
-    if f_risk.empty:
-        st.info("No assets for the selected filter.")
-    else:
-        hdf = f_risk.sort_values("RISK_SCORE", ascending=False)
-        section("Plant floor map", "every rotating asset, by line · colour = risk band, with icon and label")
-        type_order = ["Main Drive Motor", "Gearbox", "CNC Spindle", "Air Compressor", "Coolant Pump", "Conveyor Drive"]
-        lanes = []
-        for lid in sel_lines:
-            g = f_risk[f_risk.LINE_ID == lid].copy()
-            g["_o"] = g.ASSET_TYPE.map({t: i for i, t in enumerate(type_order)})
-            tiles = []
-            for a in g.sort_values("_o").itertuples():
-                kind = ("info" if a.SUSPECTED_MODE == "SENSOR_FAULT" and a.RISK_BAND == "LOW"
-                        else BAND_STYLE.get(a.RISK_BAND, ("good", ""))[0])
-                mode = "Healthy" if a.SUSPECTED_MODE == "NONE" else pretty(a.SUSPECTED_MODE)
-                eta = "" if a.SUSPECTED_MODE in ("NONE", "SENSOR_FAULT") else f" · {fmt_hours(a.HOURS_TO_ALARM)}"
-                tiles.append(f"""<div class="pp-tile {kind if kind != 'good' else ''}" title="{a.ASSET_ID}: {mode}">
-<div class="pp-tile-top"><span class="pp-tile-id">{TYPE_ICON.get(a.ASSET_TYPE, '⚙')} {a.ASSET_ID.split('-', 2)[-1]}</span>
-<span class="pp-tile-risk" title="risk score 0-100">{a.RISK_SCORE:.0f}</span></div>
-<div class="pp-tile-type">{a.ASSET_TYPE}</div>
-<div class="pp-tile-foot">{band_chip(a.RISK_BAND, a.SUSPECTED_MODE)}</div>
-<div class="pp-tile-mode">{mode}{eta}</div></div>""")
-            n_risk = int(g.RISK_BAND.isin(["HIGH", "MEDIUM"]).sum())
-            lanes.append(f"""<div class="pp-lane"><div class="pp-lane-h">{lid}</div>
-<div class="pp-lane-s">{short_line(lid)} · {n_risk} at risk</div><div class="pp-tiles">{''.join(tiles)}</div></div>""")
-        html(f'<div class="pp-floor" style="--cols:{min(len(lanes), 4)}">{"".join(lanes)}</div>')
-
-        st.markdown("")
-        section("Asset drill-down")
-        d1, d2 = st.columns([2, 3])
-        hk = hdf.set_index("ASSET_ID")
-        with d1:
-            asset_h = st.selectbox("Asset", hk.index.tolist(), key="health_asset",
-                                   format_func=lambda a: f"{a} · {hk.ASSET_NAME[a]} · risk {hk.RISK_SCORE[a]:.0f}")
-        with d2:
-            days = st.select_slider("Window", options=[3, 7, 14, 30, 60], value=14, format_func=lambda d: f"{d} days")
-        ra = hk.loc[asset_h]
-        bv, bt = baseline_for(asset_h)
-        t1, t2 = st.columns(2, gap="medium")
-        with t1:
-            section(f"Vibration · last {days} days", "mm/s, hourly")
-            trend_chart(asset_h, "VIB_AVG", bv, ra.VIBRATION_ALARM_MM_S, "mm/s", days, SERIES[0])
-        with t2:
-            section(f"Temperature · last {days} days", "°C, hourly")
-            trend_chart(asset_h, "TEMP_AVG", bt, ra.TEMP_ALARM_C, "°C", days, SERIES[1])
-        hist = wos[wos.ASSET_ID == asset_h][["WO_ID", "WO_TYPE", "PRIORITY", "STATUS", "CREATED_TS", "FAILURE_MODE",
-                                             "DOWNTIME_HOURS", "TECHNICIAN_NOTES"]]
-        section(f"Work-order history · {asset_h}", f"{len(hist)} records")
-        st.dataframe(hist, hide_index=True, **stretch(), column_config={
-            "WO_ID": "Work order", "WO_TYPE": "Type", "PRIORITY": "Priority", "STATUS": "Status",
-            "CREATED_TS": st.column_config.DatetimeColumn("Created", format="DD MMM YYYY HH:mm"),
-            "FAILURE_MODE": "Failure mode", "DOWNTIME_HOURS": st.column_config.NumberColumn("Downtime h", format="%.1f"),
-            "TECHNICIAN_NOTES": st.column_config.TextColumn("Technician notes", width="large")})
-
-        with st.expander("Fleet table (all assets in the selection)"):
-            tbl = hdf[["ASSET_ID", "ASSET_TYPE", "LINE_ID", "CRITICALITY", "RISK_SCORE", "RISK_BAND", "SUSPECTED_MODE",
-                       "HOURS_TO_ALARM", "VIB_RATIO", "TEMP_DELTA", "DAYS_SINCE_PM"]].copy()
-            tbl["SUSPECTED_MODE"] = tbl.SUSPECTED_MODE.apply(pretty)
-            tbl["HOURS_TO_ALARM"] = tbl.HOURS_TO_ALARM.apply(fmt_hours)
-            st.dataframe(tbl, hide_index=True, **stretch(), column_config={
-                "ASSET_ID": "Asset", "ASSET_TYPE": "Type", "LINE_ID": "Line", "CRITICALITY": "Crit.",
-                "RISK_SCORE": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.0f"),
-                "RISK_BAND": "Band", "SUSPECTED_MODE": "Suspected mode", "HOURS_TO_ALARM": "To alarm",
-                "VIB_RATIO": st.column_config.NumberColumn("Vib × base", format="%.2f"),
-                "TEMP_DELTA": st.column_config.NumberColumn("Temp Δ °C", format="%+.1f"),
-                "DAYS_SINCE_PM": st.column_config.NumberColumn("Days since PM", format="%d")})
-
-        with st.expander("Back-test: how early would PlantPulse have warned before past failures?"):
+                "Has this happened before on this or similar assets, and what fixed it?"]
+        else:
+            suggestions = ["Which line has the worst OEE?", "What is MTTR by line?",
+                           "Which asset types have the most breakdown downtime?", "What is PM compliance by line?"]
+        section("Suggested questions")
+        for i, sq in enumerate(suggestions):
+            if st.button(sq, key=f"sq_{'r' if rca else 'a'}_{i}", **stretch("button")):
+                asked = sq
+        with st.form("cop_form", clear_on_submit=True):
+            free = st.text_input("Your question", placeholder="e.g. Which spare parts should I reserve?" if rca
+                                 else "e.g. Show availability, performance and quality by plant")
+            if st.form_submit_button("Ask", type="primary") and free.strip():
+                asked = free.strip()
+        st.caption(("Cortex Search over manuals, SOPs and technician notes + a Cortex LLM, grounded in this asset's "
+                    "telemetry and CMMS history." if rca else
+                    "Natural language → governed SEMANTIC_VIEW query over PLANT_OPS_SV, so every number uses the "
+                    "plant's single definition of OEE, MTTR and downtime.") if LIVE else
+                   "Demo mode: answers come from local stand-ins over the same synthetic data.")
+    chat = st.session_state.setdefault("chat", [])
+    if asked:
+        with st.spinner("Thinking with your plant data" + (" (about 20 s)..." if LIVE else "...")):
             try:
-                bt_df = repo.backtest()
-                if len(bt_df):
-                    lead = pd.to_numeric(bt_df.LEAD_TIME_HOURS, errors="coerce")
-                    html(stats([("Flagged in advance", f"{lead.notna().sum()} / {len(bt_df)}"),
-                                ("Median lead time", f"{lead.median():.0f} h"),
-                                ("Lead time range", f"{lead.min():.0f}–{lead.max():.0f} h"),
-                                ("Failure mode correct", f"{bt_df.MODE_CORRECT.astype(bool).mean():.0%}")]))
-                st.dataframe(bt_df, hide_index=True, **stretch())
+                if rca:
+                    res = repo.root_cause(asset, asked)
+                elif LIVE:
+                    res = call(f"CALL {DB}.ANALYTICS.ASK_OEE({lit(asked)})")
+                else:
+                    res = demo_ask_oee(asked)
             except Exception as e:
-                st.caption(f"Back-test unavailable: {e}")
+                res = {"error": str(e)}
+        chat.append({"kind": "rca" if rca else "oee", "asset": asset, "q": asked,
+                     "res": res if isinstance(res, dict) else {"answer": str(res)}})
+    with right:
+        if not chat:
+            html("""<div class="pp-card" style="text-align:center;padding:56px 24px">
+<div style="font-size:2.4rem">🧠</div><div class="pp-sec-t">Ask PlantPulse</div>
+<div class="pp-asset-s" style="margin-top:6px">Root-cause answers cite the manuals (DOC-…) and past work orders (WO-…)
+they rely on.<br>Analytics answers show the governed query that produced every number.</div></div>""")
+        for i, m in enumerate(reversed(chat[-6:])):
+            res = m["res"]
+            html(f'<div class="pp-q">🙋 {m["q"]}' + (f' <span style="opacity:.75">· {m["asset"]}</span>' if m["asset"] else "")
+                 + "</div>")
+            if res.get("error"):
+                st.error(res["error"])
+                continue
+            with st.container(border=True):
+                if m["kind"] == "rca":
+                    html(f'<div class="pp-asset-k">🧠 Root-cause brief · {m["asset"]}</div>')
+                    st.markdown(compact_md(res.get("answer", "")))
+                    if res.get("sources"):
+                        with st.expander(f"Cited sources ({len(res['sources'])})", expanded=i == 0):
+                            html(source_rows(res["sources"]))
+                else:
+                    html(f'<div class="pp-asset-k">📊 Plant analytics · {res.get("engine", "")}</div>')
+                    st.markdown(f"**{res.get('answer', '')}**")
+                    rows, cols = res.get("rows") or [], res.get("columns") or []
+                    if rows:
+                        st.dataframe(pd.DataFrame(rows, columns=cols or None), hide_index=True, **stretch())
+                    if res.get("sql"):
+                        with st.expander("Governed query", expanded=False):
+                            html(f'<div class="pp-sql">{res["sql"]}</div>')
+        if chat and st.button("Clear conversation", key="cop_clear"):
+            st.session_state["chat"] = []
+            rerun()
 
 
-# ----------------------------------------------------------------------------- tab 4: OEE
-with tabs[3]:
+# ----------------------------------------------------------------------------- page: OEE
+def page_oee():
+    page_header("OEE & losses", f"Availability × Performance × Quality for {scope}, the loss tree, and which assets "
+                                "cost the most availability")
     if f_oee.empty:
         st.info("No production data for the selected filter.")
-    else:
-        per_line = f_oee.groupby("LINE_ID")[["AVAILABILITY", "PERFORMANCE", "QUALITY", "OEE"]].mean()
-        bd = f_oee.groupby("LINE_ID").BREAKDOWN_MIN.sum() / 60
-        cards = []
-        for lid, v in per_line.iterrows():
-            g = (v.OEE - OEE_TARGET) * 100
-            cards.append(f"""<div class="pp-kpi"><div class="pp-kpi-top">
-<span class="pp-ic" style="background:{line_color(lid)}22;color:{line_color(lid)}">■</span>{lid} · {short_line(lid)}</div>
-<div class="pp-line-v">{v.OEE * 100:.1f}%</div>
-<div class="pp-kpi-sub"><span class="{'pp-pos' if g >= 0 else 'pp-neg'}">{'▲' if g >= 0 else '▼'} {abs(g):.1f} pp</span> vs target
-· {bd.get(lid, 0):.0f} h breakdowns</div>
-<div class="pp-apq"><span>A <b>{v.AVAILABILITY:.1%}</b></span><span>P <b>{v.PERFORMANCE:.1%}</b></span>
-<span>Q <b>{v.QUALITY:.1%}</b></span></div></div>""")
-        html(f'<div class="pp-lines" style="--cols:{len(cards)}">{"".join(cards)}</div>')
-
-        o1, o2 = st.columns([3, 2], gap="large")
-        with o1:
-            section("Daily OEE per line", "dashed line = 80% target")
-            fig = go.Figure()
-            for lid, g in f_oee.groupby("LINE_ID"):
-                fig.add_trace(go.Scatter(x=g.PROD_DATE, y=g.OEE, mode="lines", name=lid,
-                                         line=dict(width=1.75, color=line_color(lid)),
-                                         hovertemplate=lid + " · %{x|%d %b}: <b>%{y:.1%}</b><extra></extra>"))
-            fig.add_hline(y=OEE_TARGET, line=dict(color=INK2, dash="dash", width=1.5), annotation_text="target 80%",
-                          annotation_position="bottom left", annotation_font=dict(color=INK2, size=11))
-            fig.update_yaxes(tickformat=".0%")
-            st.plotly_chart(style_fig(fig, 330, hovermode="x unified"), **stretch())
-        with o2:
-            section("Availability · Performance · Quality", "period average per line")
-            apq = per_line.reset_index()
-            fig = go.Figure()
-            for i, (c, name) in enumerate([("AVAILABILITY", "Availability"), ("PERFORMANCE", "Performance"),
-                                           ("QUALITY", "Quality"), ("OEE", "OEE")]):
-                fig.add_trace(go.Bar(x=apq.LINE_ID, y=apq[c], name=name, marker=dict(color=SERIES[i], line=dict(color="#fff", width=2)),
-                                     hovertemplate="%{x} · " + name + ": <b>%{y:.1%}</b><extra></extra>"))
-            fig.update_yaxes(tickformat=".0%", range=[0, 1.05])
-            st.plotly_chart(style_fig(fig, 330, barmode="group", bargap=0.25, bargroupgap=0.05), **stretch())
-
-        o3, o4 = st.columns([1, 1], gap="large")
-        with o3:
-            section("Where planned time goes", "hours over the whole period")
-            lt = repo.loss_tree()
-            lt = lt[lt.LINE_ID.isin(sel_lines)].sum(numeric_only=True) / 60
-            labels = ["Planned", "Breakdowns", "Minor stops", "Changeovers", "Speed loss", "Quality loss", "Fully productive"]
-            vals = [lt.PLANNED_MIN, -lt.BREAKDOWN_LOSS_MIN, -lt.MINOR_STOP_LOSS_MIN, -lt.CHANGEOVER_LOSS_MIN,
-                    -lt.SPEED_LOSS_MIN, -lt.QUALITY_LOSS_MIN, 0]
-            fig = go.Figure(go.Waterfall(
-                x=labels, y=vals, measure=["absolute"] + ["relative"] * 5 + ["total"],
-                text=[f"{abs(v):,.0f} h" for v in vals[:-1]] + [f"{lt.FULLY_PRODUCTIVE_MIN:,.0f} h"],
-                textposition="outside", textfont=dict(color=INK2, size=11),
-                connector=dict(line=dict(color=AXIS, width=1)),
-                decreasing=dict(marker=dict(color=SERIES[1])), increasing=dict(marker=dict(color=SERIES[0])),
-                totals=dict(marker=dict(color=SERIES[2])),
-                hovertemplate="%{x}: <b>%{text}</b><extra></extra>"))
-            fig.update_yaxes(range=[0, lt.PLANNED_MIN * 1.14])
-            st.plotly_chart(style_fig(fig, 340, showlegend=False), **stretch())
-        with o4:
-            section("Breakdown hours by asset", "darker = more critical asset")
-            imp = repo.downtime_impact()
-            imp = imp[imp.LINE_ID.isin(sel_lines) & (imp.BREAKDOWN_HOURS > 0)].sort_values("BREAKDOWN_HOURS")
-            fig = go.Figure()
-            for crit, lbl in [("A", "A · stops the line"), ("B", "B · degrades output"), ("C", "C · minor")]:
-                g = imp[imp.CRITICALITY == crit]
-                if len(g):
-                    fig.add_trace(go.Bar(y=g.ASSET_ID, x=g.BREAKDOWN_HOURS, orientation="h", name=lbl,
-                                         marker=dict(color=CRIT_RAMP[crit], line=dict(color="#fff", width=2)),
-                                         text=[f"{h:.0f} h" for h in g.BREAKDOWN_HOURS], textposition="outside",
-                                         textfont=dict(color=INK2, size=11),
-                                         customdata=np.stack([g.BREAKDOWNS, g.BREAKDOWN_COST_INR], axis=-1),
-                                         hovertemplate="%{y}: <b>%{x:.1f} h</b> · %{customdata[0]:.0f} breakdown(s)"
-                                                       " · ₹%{customdata[1]:,.0f}<extra></extra>"))
-            fig.update_yaxes(categoryorder="array", categoryarray=imp.ASSET_ID.tolist())
-            fig.update_xaxes(range=[0, (imp.BREAKDOWN_HOURS.max() if len(imp) else 1) * 1.25], showgrid=True, gridcolor=GRID)
-            fig.update_yaxes(showgrid=False)
-            st.plotly_chart(style_fig(fig, 340), **stretch())
-        st.caption("Breakdown losses are the part of OEE that predictive maintenance attacks directly; the impact chart "
-                   "attributes them to assets from corrective work orders.")
+        return
+    per_line = line_cards()
+    o1, o2 = st.columns([3, 2], gap="large")
+    with o1:
+        section("Daily OEE per line", "dashed line = 80% target · dips are breakdown days")
+        fig = go.Figure()
+        for lid, g in f_oee.groupby("LINE_ID"):
+            fig.add_trace(go.Scatter(x=g.PROD_DATE, y=g.OEE, mode="lines", name=lid, line=dict(width=1.75, color=line_color(lid)),
+                                     hovertemplate=lid + " · %{x|%d %b}: <b>%{y:.1%}</b><extra></extra>"))
+        fig.add_hline(y=OEE_TARGET, line=dict(color=INK2, dash="dash", width=1.5), annotation_text="target 80%",
+                      annotation_position="bottom left", annotation_font=dict(color=INK2, size=11))
+        fig.update_yaxes(tickformat=".0%")
+        st.plotly_chart(style_fig(fig, 340, hovermode="x unified"), **stretch())
+    with o2:
+        section("Availability · Performance · Quality", "period average per line")
+        apq = per_line.reset_index()
+        fig = go.Figure()
+        for i, (c, name) in enumerate([("AVAILABILITY", "Availability"), ("PERFORMANCE", "Performance"),
+                                       ("QUALITY", "Quality"), ("OEE", "OEE")]):
+            fig.add_trace(go.Bar(x=apq.LINE_ID, y=apq[c], name=name, marker=dict(color=SERIES[i], line=dict(color="#fff", width=2)),
+                                 hovertemplate="%{x} · " + name + ": <b>%{y:.1%}</b><extra></extra>"))
+        fig.update_yaxes(tickformat=".0%", range=[0, 1.05])
+        st.plotly_chart(style_fig(fig, 340, barmode="group", bargap=0.25, bargroupgap=0.05), **stretch())
+    o3, o4 = st.columns([1, 1], gap="large")
+    with o3:
+        section("Where planned time goes", "hours over the whole period")
+        lt = repo.loss_tree()
+        lt = lt[lt.LINE_ID.isin(sel_lines)].sum(numeric_only=True) / 60
+        labels = ["Planned", "Breakdowns", "Minor stops", "Changeovers", "Speed loss", "Quality loss", "Fully productive"]
+        vals = [lt.PLANNED_MIN, -lt.BREAKDOWN_LOSS_MIN, -lt.MINOR_STOP_LOSS_MIN, -lt.CHANGEOVER_LOSS_MIN,
+                -lt.SPEED_LOSS_MIN, -lt.QUALITY_LOSS_MIN, 0]
+        fig = go.Figure(go.Waterfall(
+            x=labels, y=vals, measure=["absolute"] + ["relative"] * 5 + ["total"],
+            text=[f"{abs(v):,.0f} h" for v in vals[:-1]] + [f"{lt.FULLY_PRODUCTIVE_MIN:,.0f} h"],
+            textposition="outside", textfont=dict(color=INK2, size=11), connector=dict(line=dict(color=AXIS, width=1)),
+            decreasing=dict(marker=dict(color=SERIES[1])), increasing=dict(marker=dict(color=SERIES[0])),
+            totals=dict(marker=dict(color=SERIES[2])), hovertemplate="%{x}: <b>%{text}</b><extra></extra>"))
+        fig.update_yaxes(range=[0, lt.PLANNED_MIN * 1.14])
+        st.plotly_chart(style_fig(fig, 340, showlegend=False), **stretch())
+    with o4:
+        section("Breakdown hours by asset", "darker = more critical asset")
+        imp = repo.downtime_impact()
+        imp = imp[imp.LINE_ID.isin(sel_lines) & (imp.BREAKDOWN_HOURS > 0)].sort_values("BREAKDOWN_HOURS")
+        fig = go.Figure()
+        for crit, lbl in [("A", "A · stops the line"), ("B", "B · degrades output"), ("C", "C · minor")]:
+            g = imp[imp.CRITICALITY == crit]
+            if len(g):
+                fig.add_trace(go.Bar(y=g.ASSET_ID, x=g.BREAKDOWN_HOURS, orientation="h", name=lbl,
+                                     marker=dict(color=CRIT_RAMP[crit], line=dict(color="#fff", width=2)),
+                                     text=[f"{h:.0f} h" for h in g.BREAKDOWN_HOURS], textposition="outside",
+                                     textfont=dict(color=INK2, size=11),
+                                     customdata=np.stack([g.BREAKDOWNS, g.BREAKDOWN_COST_INR], axis=-1),
+                                     hovertemplate="%{y}: <b>%{x:.1f} h</b> · %{customdata[0]:.0f} breakdown(s)"
+                                                   " · ₹%{customdata[1]:,.0f}<extra></extra>"))
+        fig.update_yaxes(categoryorder="array", categoryarray=imp.ASSET_ID.tolist(), showgrid=False)
+        fig.update_xaxes(range=[0, (imp.BREAKDOWN_HOURS.max() if len(imp) else 1) * 1.25], showgrid=True, gridcolor=GRID)
+        st.plotly_chart(style_fig(fig, 340), **stretch())
+    st.caption("Breakdown losses are the part of OEE that predictive maintenance attacks directly; ask the Copilot "
+               "(plant analytics) for any other cut of these governed metrics.")
 
 
-# ----------------------------------------------------------------------------- tab 5: work orders
-with tabs[4]:
+# ----------------------------------------------------------------------------- page: work orders
+def page_work_orders():
+    page_header("Work orders", "Predictive jobs raised by PlantPulse, purchase requisitions for stock-outs, and the "
+                               "breakdown history the copilot learns from")
     section("Open predictive work orders", f"{len(open_pdm)} open")
     if open_pdm.empty:
         html("""<div class="pp-card" style="text-align:center;padding:32px">
 <div style="font-size:2rem">🛠</div><div class="pp-sec-t">No predictive work orders yet</div>
-<div class="pp-asset-s" style="margin-top:6px">Create one from an alert in <b>Alert Triage</b>: priority, parts,
+<div class="pp-asset-s" style="margin-top:6px">Create one from an alert in <b>Alerts</b>: priority, parts,
 purchase requisitions and a job plan are generated in one step.</div></div>""")
     for w in open_pdm.itertuples():
         html(f"""<div class="pp-ticket"><div><div class="pp-ticket-id">{w.WO_ID}
@@ -1287,7 +1450,6 @@ parts {w.PARTS_USED or '–'} · requested by {w.CREATED_BY}</div></div>
 <div class="pp-sec-t">{pd.to_datetime(w.SCHEDULED_TS):%d %b %H:%M}</div></div></div>""")
         with st.expander(f"Job plan · {w.WO_ID}"):
             st.markdown(compact_md(w.AI_JOB_PLAN or ""))
-
     st.markdown("")
     section("Purchase requisitions", "raised automatically when a reserved part is out of stock")
     prs = repo.purchase_reqs()
@@ -1297,7 +1459,6 @@ parts {w.PARTS_USED or '–'} · requested by {w.CREATED_BY}</div></div>
         st.dataframe(prs, hide_index=True, **stretch(), column_config={
             "EXPEDITE": st.column_config.CheckboxColumn("Expedite"),
             "LEAD_TIME_DAYS": st.column_config.NumberColumn("Lead time (d)", format="%d")})
-
     section("Recent corrective (breakdown) work orders", "the history the copilot learns from")
     cm = f_wos[f_wos.WO_TYPE == "CM"].sort_values("CREATED_TS", ascending=False).head(15)
     st.dataframe(cm[["WO_ID", "ASSET_ID", "PRIORITY", "CREATED_TS", "FAILURE_MODE", "DOWNTIME_HOURS", "COST_INR",
@@ -1307,3 +1468,71 @@ parts {w.PARTS_USED or '–'} · requested by {w.CREATED_BY}</div></div>
         "FAILURE_MODE": "Failure mode", "DOWNTIME_HOURS": st.column_config.NumberColumn("Downtime h", format="%.1f"),
         "COST_INR": st.column_config.NumberColumn("Cost ₹", format="%d"),
         "TECHNICIAN_NOTES": st.column_config.TextColumn("Technician notes", width="large")})
+
+
+# ----------------------------------------------------------------------------- page: how it works
+STEPS = [
+    ("Converge", "OT telemetry (vibration, temperature, RPM, current) lands beside ERP/CMMS work orders, spare parts, "
+                 "MES production counts and maintenance manuals.", "COPY INTO · Snowpipe Streaming · Tasks"),
+    ("Engineer", "Hourly roll-ups, rolling 24 h / 72 h features, trend slopes and learned healthy baselines, joined to "
+                 "the last PM with an ASOF JOIN.", "V_ASSET_FEATURES · ASOF JOIN"),
+    ("Predict", "Snowflake ML classifier (failure within 72 h) blended with an explainable rule engine that names the "
+                "failure mode and projects hours to alarm.", "SNOWFLAKE.ML.CLASSIFICATION"),
+    ("Explain", "Cortex Search retrieves manuals, SOPs and technician notes; a Cortex LLM writes a cited root-cause "
+                "brief grounded in live evidence.", "Cortex Search · Cortex AI"),
+    ("Act", "One call turns an alert into a prioritised predictive WO with parts reserved, stock checked, an "
+            "expedited PR on stock-out and a job plan.", "CREATE_PDM_WORK_ORDER"),
+    ("Govern", "A semantic view holds the single definition of OEE, MTTR, downtime and PM compliance for every tool, "
+               "agent and dashboard.", "SEMANTIC VIEW PLANT_OPS_SV"),
+]
+SKILLS = [
+    ("$plantpulse-setup", "Build, verify or reset the environment"),
+    ("$asset-health-triage", "Rescore, raise alerts, rank, flag false alarms → alert id"),
+    ("$root-cause-investigator", "Trend vs baseline + history + search + cited brief → diagnosis"),
+    ("$work-order-automator", "Policy, parts, PRs, job plan, verified in ERP → WO id"),
+    ("$oee-analyst", "Governed OEE, loss tree, asset impact, improvement case → OEE gain"),
+]
+
+
+def page_how():
+    page_header("How it works", "One governed platform: IT + OT + unstructured knowledge in Snowflake, operated "
+                                "through CoCo CLI skills and this command center")
+    html('<div class="pp-steps">' + "".join(
+        f'<div class="pp-step"><div class="pp-step-n">{i}</div><div class="pp-step-t">{t}</div>'
+        f'<div class="pp-step-s">{s}</div><div class="pp-step-x">{x}</div></div>'
+        for i, (t, s, x) in enumerate(STEPS, 1)) + "</div>")
+    st.markdown("")
+    arch = os.path.join(APP_DIR, "architecture.png")
+    c1, c2 = st.columns([8, 4], gap="large")
+    with c1:
+        section("Architecture")
+        if os.path.exists(arch):
+            st.image(arch, **stretch("button"))
+        else:
+            st.caption("Architecture diagram: see docs/architecture.png in the repository.")
+    with c2:
+        section("CoCo CLI skills", "modular; each hands an ID to the next")
+        html('<div class="pp-card">' + "".join(
+            f'<div class="pp-src"><span class="pp-chip brand" style="font-family:Consolas,monospace">{n}</span>'
+            f'<span style="font-size:.82rem">{d}</span></div>' for n, d in SKILLS) + "</div>")
+        section("Proven on history")
+        bt = _backtest()
+        if len(bt):
+            lead = pd.to_numeric(bt.LEAD_TIME_HOURS, errors="coerce")
+            html(stats([("Caught", f"{lead.notna().sum()}/{len(bt)}"), ("Median lead", f"{lead.median():.0f} h"),
+                        ("Mode correct", f"{bt.MODE_CORRECT.astype(bool).mean():.0%}"), ("False alarms", "0")]))
+        if LIVE:
+            try:
+                mv = query(f"SELECT * FROM {DB}.ANALYTICS.ML_VALIDATION")
+                if len(mv):
+                    section("Out-of-time ML validation", "trained on earlier weeks, tested on later ones")
+                    st.dataframe(mv, hide_index=True, **stretch())
+            except Exception:
+                pass
+        st.caption("All data is synthetic. Snowflake features: ML Classification · Cortex Search · Cortex AI · "
+                   "semantic views · ASOF JOIN · Snowpark Python · Tasks · Streamlit in Snowflake.")
+
+
+# ----------------------------------------------------------------------------- router
+{PAGES[0]: page_control_room, PAGES[1]: page_alerts, PAGES[2]: page_asset_360, PAGES[3]: page_copilot,
+ PAGES[4]: page_oee, PAGES[5]: page_work_orders, PAGES[6]: page_how}[page]()
