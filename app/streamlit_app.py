@@ -700,14 +700,20 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 
 /* app bar as a keyed container so the severity pills can be real buttons */
 .st-key-appbar { background: linear-gradient(110deg, #0D3B5C 0%, #11567F 45%, #1a86bd 100%); border-radius: 16px;
-  padding: 12px 22px; box-shadow: 0 8px 24px rgba(17,86,127,.18); margin-bottom: 4px; }
+  padding: 14px 22px; box-shadow: 0 8px 24px rgba(17,86,127,.18); margin-bottom: 4px; }
 .st-key-appbar .pp-appbar { background: none; box-shadow: none; padding: 0; margin: 0; border-radius: 0; }
-.st-key-appbar [data-testid="stHorizontalBlock"] { align-items: center; }
-.st-key-appbar [data-testid="stMarkdownContainer"] p, .st-key-appbar .stMarkdown { margin-bottom: 0; }
-.st-key-appbar [data-testid="stElementContainer"], .st-key-appbar .element-container { margin-bottom: 0; }
+.st-key-appbar [data-testid="stHorizontalBlock"] { align-items: center !important; gap: 12px; }
+.st-key-appbar [data-testid="stColumn"], .st-key-appbar [data-testid="column"] { display: flex; flex-direction: column;
+  justify-content: center; min-height: 48px; }
+.st-key-appbar [data-testid="stColumn"] > div, .st-key-appbar [data-testid="column"] > div { width: 100%; }
+.st-key-appbar [data-testid="stMarkdownContainer"], .st-key-appbar [data-testid="stMarkdown"], .st-key-appbar .stMarkdown,
+.st-key-appbar [data-testid="stMarkdownContainer"] p, .st-key-appbar [data-testid="stElementContainer"],
+.st-key-appbar .element-container, .st-key-appbar .stButton { margin: 0 !important; }
+.st-key-appbar [data-testid="stVerticalBlock"] { gap: 0 !important; }
+.st-key-appbar .pp-fresh { text-align: right; margin: 0; }
 .st-key-sev_CRITICAL button, .st-key-sev_WARNING button, .st-key-sev_INFO button {
-  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.28); border-radius: 999px; min-height: 34px;
-  padding: 2px 12px; transition: background .12s, border-color .12s; }
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.28); border-radius: 999px; min-height: 36px;
+  height: 36px; padding: 0 12px; transition: background .12s, border-color .12s; }
 .st-key-sev_CRITICAL button p, .st-key-sev_WARNING button p, .st-key-sev_INFO button p { color: #fff; font-weight: 650;
   font-size: .84rem; white-space: nowrap; }
 .st-key-sev_CRITICAL button:hover, .st-key-sev_WARNING button:hover, .st-key-sev_INFO button:hover {
@@ -715,6 +721,11 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .st-key-sev_CRITICAL button { border-color: rgba(255,140,140,.75); }
 .st-key-sev_WARNING button { border-color: rgba(250,200,90,.75); }
 .pp-filter { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--pp-ink2); margin: 0 0 6px; }
+
+/* copilot suggested questions: wrap instead of truncating */
+[class*="st-key-sq_"] button { justify-content: flex-start; text-align: left; height: auto; min-height: 40px; padding: 8px 14px; }
+[class*="st-key-sq_"] button p, [class*="st-key-sq_"] button div { white-space: normal !important; overflow: visible !important;
+  text-overflow: clip !important; text-align: left; line-height: 1.4; }
 
 /* how it works */
 .pp-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
@@ -836,9 +847,9 @@ sev_counts = open_all.SEVERITY.value_counts()
 badge = ('<span class="pp-badge live">● LIVE · SNOWFLAKE</span>' if LIVE
          else '<span class="pp-badge demo">● DEMO · SYNTHETIC DATA</span>')
 with st.container(key="appbar"):
-    b1, b2, b3, b4, b5, b6 = st.columns([5.2, 2.1, 1.05, 1.05, 0.85, 1.6], gap="small",
+    b1, b2, b3, b4, b5, b6 = st.columns([5.0, 2.2, 1.05, 1.05, 0.9, 1.7], gap="small",
                                         vertical_alignment="center") if ST_VER >= (1, 36) \
-        else st.columns([5.2, 2.1, 1.05, 1.05, 0.85, 1.6], gap="small")
+        else st.columns([5.0, 2.2, 1.05, 1.05, 0.9, 1.7], gap="small")
     with b1:
         html("""<div class="pp-appbar"><div class="pp-brand"><div class="pp-logo">❄︎</div><div>
 <div class="pp-brand-t">PlantPulse</div><div class="pp-brand-s">Predictive maintenance &amp; OEE command center · Pune &amp; Chennai</div>
@@ -852,7 +863,7 @@ scored {scored_at:%d %b %H:%M}{" (account time)" if LIVE else " · demo snapshot
                       on_click=filter_severity, args=(sev,), help=f"Open the alert queue filtered to {sev.lower()} alerts",
                       **stretch("button"))
     with b6:
-        html(f'<div style="text-align:right;line-height:34px">{badge}</div>')
+        html(f'<div style="display:flex;justify-content:flex-end;align-items:center;height:36px">{badge}</div>')
 
 if st.session_state.get("nav") not in PAGES:
     st.session_state["nav"] = PAGES[0]
