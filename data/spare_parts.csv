@@ -1,0 +1,14 @@
+PART_NO,DESCRIPTION,COMPATIBLE_ASSET_TYPES,ON_HAND_QTY,LEAD_TIME_DAYS,UNIT_COST_INR
+BRG-6312-C3,Deep groove ball bearing 6312 C3,Main Drive Motor|Gearbox|Air Compressor,2,5,6800
+GRS-LGHP2,High-performance polyurea grease 18kg,ALL,6,3,14500
+IMP-CP-150,Coolant pump impeller 150mm,Coolant Pump,1,12,22000
+SEAL-MS-35,Mechanical seal 35mm,Coolant Pump,3,6,9500
+STR-SUC-80,Suction strainer basket 80mm,Coolant Pump,4,4,2800
+OIL-ISO-VG220,Gear oil ISO VG 220 (20L),Gearbox|Air Compressor,8,2,7600
+FLT-OIL-90,Oil filter element 90 micron,Gearbox|Air Compressor,5,3,1900
+SNS-PT100,PT100 temperature sensor,ALL,6,4,3200
+BAL-WT-KIT,Balancing weight kit,ALL,2,7,4100
+CPL-INS-L100,Jaw coupling elastomer insert L100,Conveyor Drive|Main Drive Motor,3,5,2600
+SHM-KIT-SS,Stainless shim kit,ALL,4,3,1800
+MTR-STBY-45KW,Standby 45kW IE3 motor,Main Drive Motor,1,21,185000
+BRG-SPN-7014,Angular contact spindle bearing set 7014,CNC Spindle,0,14,48000

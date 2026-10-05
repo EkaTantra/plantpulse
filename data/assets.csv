@@ -1,0 +1,25 @@
+ASSET_ID,ASSET_NAME,ASSET_TYPE,TYPE_CODE,PLANT_CODE,PLANT_NAME,LINE_ID,MANUFACTURER,INSTALL_DATE,CRITICALITY,RATED_RPM,BASE_VIBRATION_MM_S,VIBRATION_ALARM_MM_S,TEMP_ALARM_C,RATED_CURRENT_A,PM_INTERVAL_DAYS,COST_CENTER
+PUN-L1-MTR-01,Main Drive Motor L1,Main Drive Motor,MTR,PUN,Pune Assembly Plant,PUN-L1,Siemens,2023-10-05,A,1480,1.8,7.1,95,42,30,CC-PUN-L1-MNT
+PUN-L1-PMP-01,Coolant Pump L1,Coolant Pump,PMP,PUN,Pune Assembly Plant,PUN-L1,Grundfos,2021-02-18,B,2950,2.2,7.1,85,18,30,CC-PUN-L1-MNT
+PUN-L1-CMP-01,Air Compressor L1,Air Compressor,CMP,PUN,Pune Assembly Plant,PUN-L1,Atlas Copco,2021-08-14,B,3000,2.5,7.1,110,55,30,CC-PUN-L1-MNT
+PUN-L1-GBX-01,Gearbox L1,Gearbox,GBX,PUN,Pune Assembly Plant,PUN-L1,SEW-Eurodrive,2023-05-15,A,420,2.0,7.1,100,30,30,CC-PUN-L1-MNT
+PUN-L1-SPN-01,CNC Spindle L1,CNC Spindle,SPN,PUN,Pune Assembly Plant,PUN-L1,Fanuc,2020-09-30,A,12000,1.2,4.5,75,12,30,CC-PUN-L1-MNT
+PUN-L1-CNV-01,Conveyor Drive L1,Conveyor Drive,CNV,PUN,Pune Assembly Plant,PUN-L1,Bonfiglioli,2022-05-16,C,90,1.5,7.1,80,9,30,CC-PUN-L1-MNT
+PUN-L2-MTR-01,Main Drive Motor L2,Main Drive Motor,MTR,PUN,Pune Assembly Plant,PUN-L2,Siemens,2022-11-05,A,1480,1.8,7.1,95,42,30,CC-PUN-L2-MNT
+PUN-L2-PMP-01,Coolant Pump L2,Coolant Pump,PMP,PUN,Pune Assembly Plant,PUN-L2,Grundfos,2017-11-06,B,2950,2.2,7.1,85,18,30,CC-PUN-L2-MNT
+PUN-L2-CMP-01,Air Compressor L2,Air Compressor,CMP,PUN,Pune Assembly Plant,PUN-L2,Atlas Copco,2016-06-15,B,3000,2.5,7.1,110,55,30,CC-PUN-L2-MNT
+PUN-L2-GBX-01,Gearbox L2,Gearbox,GBX,PUN,Pune Assembly Plant,PUN-L2,SEW-Eurodrive,2018-06-19,A,420,2.0,7.1,100,30,30,CC-PUN-L2-MNT
+PUN-L2-SPN-01,CNC Spindle L2,CNC Spindle,SPN,PUN,Pune Assembly Plant,PUN-L2,Fanuc,2018-05-05,A,12000,1.2,4.5,75,12,30,CC-PUN-L2-MNT
+PUN-L2-CNV-01,Conveyor Drive L2,Conveyor Drive,CNV,PUN,Pune Assembly Plant,PUN-L2,Bonfiglioli,2023-03-05,C,90,1.5,7.1,80,9,30,CC-PUN-L2-MNT
+CHN-L1-MTR-01,Main Drive Motor L1,Main Drive Motor,MTR,CHN,Chennai Machining Plant,CHN-L1,Siemens,2023-06-30,A,1480,1.8,7.1,95,42,30,CC-CHN-L1-MNT
+CHN-L1-PMP-01,Coolant Pump L1,Coolant Pump,PMP,CHN,Chennai Machining Plant,CHN-L1,Grundfos,2016-01-16,B,2950,2.2,7.1,85,18,30,CC-CHN-L1-MNT
+CHN-L1-CMP-01,Air Compressor L1,Air Compressor,CMP,CHN,Chennai Machining Plant,CHN-L1,Atlas Copco,2020-02-08,B,3000,2.5,7.1,110,55,30,CC-CHN-L1-MNT
+CHN-L1-GBX-01,Gearbox L1,Gearbox,GBX,CHN,Chennai Machining Plant,CHN-L1,SEW-Eurodrive,2022-09-29,A,420,2.0,7.1,100,30,30,CC-CHN-L1-MNT
+CHN-L1-SPN-01,CNC Spindle L1,CNC Spindle,SPN,CHN,Chennai Machining Plant,CHN-L1,Fanuc,2017-01-29,A,12000,1.2,4.5,75,12,30,CC-CHN-L1-MNT
+CHN-L1-CNV-01,Conveyor Drive L1,Conveyor Drive,CNV,CHN,Chennai Machining Plant,CHN-L1,Bonfiglioli,2022-07-19,C,90,1.5,7.1,80,9,30,CC-CHN-L1-MNT
+CHN-L2-MTR-01,Main Drive Motor L2,Main Drive Motor,MTR,CHN,Chennai Machining Plant,CHN-L2,Siemens,2016-12-23,A,1480,1.8,7.1,95,42,30,CC-CHN-L2-MNT
+CHN-L2-PMP-01,Coolant Pump L2,Coolant Pump,PMP,CHN,Chennai Machining Plant,CHN-L2,Grundfos,2019-11-04,B,2950,2.2,7.1,85,18,30,CC-CHN-L2-MNT
+CHN-L2-CMP-01,Air Compressor L2,Air Compressor,CMP,CHN,Chennai Machining Plant,CHN-L2,Atlas Copco,2022-09-15,B,3000,2.5,7.1,110,55,30,CC-CHN-L2-MNT
+CHN-L2-GBX-01,Gearbox L2,Gearbox,GBX,CHN,Chennai Machining Plant,CHN-L2,SEW-Eurodrive,2018-06-28,A,420,2.0,7.1,100,30,30,CC-CHN-L2-MNT
+CHN-L2-SPN-01,CNC Spindle L2,CNC Spindle,SPN,CHN,Chennai Machining Plant,CHN-L2,Fanuc,2018-10-21,A,12000,1.2,4.5,75,12,30,CC-CHN-L2-MNT
+CHN-L2-CNV-01,Conveyor Drive L2,Conveyor Drive,CNV,CHN,Chennai Machining Plant,CHN-L2,Bonfiglioli,2018-04-15,C,90,1.5,7.1,80,9,30,CC-CHN-L2-MNT

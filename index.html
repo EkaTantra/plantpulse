@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>PlantPulse Command Center</title>
+  <link rel="icon" href="data:," />
+  <meta name="description" content="Predictive maintenance & OEE command center on Snowflake (public demo mode on synthetic data)" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@0.85.1/build/stlite.css" />
+  <style>
+    body { margin: 0; background: #ffffff; font-family: "Source Sans Pro", Segoe UI, Arial, sans-serif; }
+    #boot { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #11567F; text-align: center; padding: 16px; box-sizing: border-box; }
+    #boot h1 { font-size: 28px; margin: 0 0 8px; }
+    #boot p { color: #5B6B7C; margin: 4px 0; max-width: 560px; }
+  </style>
+</head>
+<body>
+  <div id="root"><div id="boot">
+    <h1>PlantPulse Command Center</h1>
+    <p>Loading the public demo in your browser (first load takes about 30–60 seconds).</p>
+    <p>This demo runs on the synthetic dataset; the live version runs as Streamlit in Snowflake.</p>
+  </div></div>
+  <script type="module">
+    import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@0.85.1/build/stlite.js";
+    const u = (p) => new URL(p, window.location.href).href;
+    const data = ["assets", "failure_events", "maintenance_docs", "production_log", "sensor_readings", "spare_parts", "work_orders"];
+    const files = {
+      "app/streamlit_app.py": { url: u("app/streamlit_app.py") },
+      "app/local_engine.py": { url: u("app/local_engine.py") },
+    };
+    for (const d of data) files[`data/${d}.csv`] = { url: u(`data/${d}.csv`) };
+    mount({
+      requirements: ["plotly"], entrypoint: "app/streamlit_app.py", files,
+      streamlitConfig: { "theme.primaryColor": "#11567F", "theme.secondaryBackgroundColor": "#F4F7FA", "theme.font": "sans serif" },
+    }, document.getElementById("root"));
+  </script>
+</body>
+</html>
